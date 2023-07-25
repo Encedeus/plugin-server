@@ -13,7 +13,6 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/google/uuid"
 )
 
 // UserUpdate is the builder for updating User entities.
@@ -26,34 +25,6 @@ type UserUpdate struct {
 // Where appends a list predicates to the UserUpdate builder.
 func (uu *UserUpdate) Where(ps ...predicate.User) *UserUpdate {
 	uu.mutation.Where(ps...)
-	return uu
-}
-
-// SetUUID sets the "uuid" field.
-func (uu *UserUpdate) SetUUID(u uuid.UUID) *UserUpdate {
-	uu.mutation.SetUUID(u)
-	return uu
-}
-
-// SetNillableUUID sets the "uuid" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableUUID(u *uuid.UUID) *UserUpdate {
-	if u != nil {
-		uu.SetUUID(*u)
-	}
-	return uu
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (uu *UserUpdate) SetCreatedAt(t time.Time) *UserUpdate {
-	uu.mutation.SetCreatedAt(t)
-	return uu
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableCreatedAt(t *time.Time) *UserUpdate {
-	if t != nil {
-		uu.SetCreatedAt(*t)
-	}
 	return uu
 }
 
@@ -83,6 +54,26 @@ func (uu *UserUpdate) ClearDeletedAt() *UserUpdate {
 	return uu
 }
 
+// SetAuthUpdatedAt sets the "auth_updated_at" field.
+func (uu *UserUpdate) SetAuthUpdatedAt(t time.Time) *UserUpdate {
+	uu.mutation.SetAuthUpdatedAt(t)
+	return uu
+}
+
+// SetNillableAuthUpdatedAt sets the "auth_updated_at" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableAuthUpdatedAt(t *time.Time) *UserUpdate {
+	if t != nil {
+		uu.SetAuthUpdatedAt(*t)
+	}
+	return uu
+}
+
+// ClearAuthUpdatedAt clears the value of the "auth_updated_at" field.
+func (uu *UserUpdate) ClearAuthUpdatedAt() *UserUpdate {
+	uu.mutation.ClearAuthUpdatedAt()
+	return uu
+}
+
 // SetEmail sets the "email" field.
 func (uu *UserUpdate) SetEmail(s string) *UserUpdate {
 	uu.mutation.SetEmail(s)
@@ -98,6 +89,20 @@ func (uu *UserUpdate) SetName(s string) *UserUpdate {
 // SetPassword sets the "password" field.
 func (uu *UserUpdate) SetPassword(s string) *UserUpdate {
 	uu.mutation.SetPassword(s)
+	return uu
+}
+
+// SetVerified sets the "verified" field.
+func (uu *UserUpdate) SetVerified(b bool) *UserUpdate {
+	uu.mutation.SetVerified(b)
+	return uu
+}
+
+// SetNillableVerified sets the "verified" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableVerified(b *bool) *UserUpdate {
+	if b != nil {
+		uu.SetVerified(*b)
+	}
 	return uu
 }
 
@@ -169,12 +174,6 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := uu.mutation.UUID(); ok {
-		_spec.SetField(user.FieldUUID, field.TypeUUID, value)
-	}
-	if value, ok := uu.mutation.CreatedAt(); ok {
-		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
-	}
 	if value, ok := uu.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
 	}
@@ -184,6 +183,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if uu.mutation.DeletedAtCleared() {
 		_spec.ClearField(user.FieldDeletedAt, field.TypeTime)
 	}
+	if value, ok := uu.mutation.AuthUpdatedAt(); ok {
+		_spec.SetField(user.FieldAuthUpdatedAt, field.TypeTime, value)
+	}
+	if uu.mutation.AuthUpdatedAtCleared() {
+		_spec.ClearField(user.FieldAuthUpdatedAt, field.TypeTime)
+	}
 	if value, ok := uu.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
@@ -192,6 +197,9 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := uu.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
+	}
+	if value, ok := uu.mutation.Verified(); ok {
+		_spec.SetField(user.FieldVerified, field.TypeBool, value)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -211,34 +219,6 @@ type UserUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *UserMutation
-}
-
-// SetUUID sets the "uuid" field.
-func (uuo *UserUpdateOne) SetUUID(u uuid.UUID) *UserUpdateOne {
-	uuo.mutation.SetUUID(u)
-	return uuo
-}
-
-// SetNillableUUID sets the "uuid" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableUUID(u *uuid.UUID) *UserUpdateOne {
-	if u != nil {
-		uuo.SetUUID(*u)
-	}
-	return uuo
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (uuo *UserUpdateOne) SetCreatedAt(t time.Time) *UserUpdateOne {
-	uuo.mutation.SetCreatedAt(t)
-	return uuo
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableCreatedAt(t *time.Time) *UserUpdateOne {
-	if t != nil {
-		uuo.SetCreatedAt(*t)
-	}
-	return uuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -267,6 +247,26 @@ func (uuo *UserUpdateOne) ClearDeletedAt() *UserUpdateOne {
 	return uuo
 }
 
+// SetAuthUpdatedAt sets the "auth_updated_at" field.
+func (uuo *UserUpdateOne) SetAuthUpdatedAt(t time.Time) *UserUpdateOne {
+	uuo.mutation.SetAuthUpdatedAt(t)
+	return uuo
+}
+
+// SetNillableAuthUpdatedAt sets the "auth_updated_at" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableAuthUpdatedAt(t *time.Time) *UserUpdateOne {
+	if t != nil {
+		uuo.SetAuthUpdatedAt(*t)
+	}
+	return uuo
+}
+
+// ClearAuthUpdatedAt clears the value of the "auth_updated_at" field.
+func (uuo *UserUpdateOne) ClearAuthUpdatedAt() *UserUpdateOne {
+	uuo.mutation.ClearAuthUpdatedAt()
+	return uuo
+}
+
 // SetEmail sets the "email" field.
 func (uuo *UserUpdateOne) SetEmail(s string) *UserUpdateOne {
 	uuo.mutation.SetEmail(s)
@@ -282,6 +282,20 @@ func (uuo *UserUpdateOne) SetName(s string) *UserUpdateOne {
 // SetPassword sets the "password" field.
 func (uuo *UserUpdateOne) SetPassword(s string) *UserUpdateOne {
 	uuo.mutation.SetPassword(s)
+	return uuo
+}
+
+// SetVerified sets the "verified" field.
+func (uuo *UserUpdateOne) SetVerified(b bool) *UserUpdateOne {
+	uuo.mutation.SetVerified(b)
+	return uuo
+}
+
+// SetNillableVerified sets the "verified" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableVerified(b *bool) *UserUpdateOne {
+	if b != nil {
+		uuo.SetVerified(*b)
+	}
 	return uuo
 }
 
@@ -383,12 +397,6 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			}
 		}
 	}
-	if value, ok := uuo.mutation.UUID(); ok {
-		_spec.SetField(user.FieldUUID, field.TypeUUID, value)
-	}
-	if value, ok := uuo.mutation.CreatedAt(); ok {
-		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
-	}
 	if value, ok := uuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
 	}
@@ -398,6 +406,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if uuo.mutation.DeletedAtCleared() {
 		_spec.ClearField(user.FieldDeletedAt, field.TypeTime)
 	}
+	if value, ok := uuo.mutation.AuthUpdatedAt(); ok {
+		_spec.SetField(user.FieldAuthUpdatedAt, field.TypeTime, value)
+	}
+	if uuo.mutation.AuthUpdatedAtCleared() {
+		_spec.ClearField(user.FieldAuthUpdatedAt, field.TypeTime)
+	}
 	if value, ok := uuo.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
@@ -406,6 +420,9 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if value, ok := uuo.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
+	}
+	if value, ok := uuo.mutation.Verified(); ok {
+		_spec.SetField(user.FieldVerified, field.TypeBool, value)
 	}
 	_node = &User{config: uuo.config}
 	_spec.Assign = _node.assignValues

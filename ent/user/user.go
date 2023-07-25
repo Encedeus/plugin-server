@@ -22,12 +22,16 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldDeletedAt holds the string denoting the deleted_at field in the database.
 	FieldDeletedAt = "deleted_at"
+	// FieldAuthUpdatedAt holds the string denoting the auth_updated_at field in the database.
+	FieldAuthUpdatedAt = "auth_updated_at"
 	// FieldEmail holds the string denoting the email field in the database.
 	FieldEmail = "email"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldPassword holds the string denoting the password field in the database.
 	FieldPassword = "password"
+	// FieldVerified holds the string denoting the verified field in the database.
+	FieldVerified = "verified"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 )
@@ -39,9 +43,11 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldDeletedAt,
+	FieldAuthUpdatedAt,
 	FieldEmail,
 	FieldName,
 	FieldPassword,
+	FieldVerified,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -63,10 +69,14 @@ var (
 	DefaultUpdatedAt func() time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
+	// DefaultAuthUpdatedAt holds the default value on creation for the "auth_updated_at" field.
+	DefaultAuthUpdatedAt func() time.Time
 	// EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	EmailValidator func(string) error
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
+	// DefaultVerified holds the default value on creation for the "verified" field.
+	DefaultVerified bool
 )
 
 // OrderOption defines the ordering options for the User queries.
@@ -97,6 +107,11 @@ func ByDeletedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDeletedAt, opts...).ToFunc()
 }
 
+// ByAuthUpdatedAt orders the results by the auth_updated_at field.
+func ByAuthUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAuthUpdatedAt, opts...).ToFunc()
+}
+
 // ByEmail orders the results by the email field.
 func ByEmail(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEmail, opts...).ToFunc()
@@ -110,4 +125,9 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByPassword orders the results by the password field.
 func ByPassword(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPassword, opts...).ToFunc()
+}
+
+// ByVerified orders the results by the verified field.
+func ByVerified(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVerified, opts...).ToFunc()
 }

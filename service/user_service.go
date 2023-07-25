@@ -41,11 +41,11 @@ func UpdateUser(updateInfo dto.UpdateUserDTO, userId uuid.UUID) error {
 	}
 
 	if updateInfo.Password != "" {
-		_, err = userData.Update().SetPassword(updateInfo.Password).Save(context.Background())
+		_, err = userData.Update().SetPassword(updateInfo.Password).SetAuthUpdatedAt(time.Now()).Save(context.Background())
 	}
 
 	if updateInfo.Email != "" {
-		_, err = userData.Update().SetEmail(updateInfo.Email).Save(context.Background())
+		_, err = userData.Update().SetEmail(updateInfo.Email).SetVerified(false).Save(context.Background())
 	}
 
 	return err
@@ -95,18 +95,23 @@ func DoesUserWithUUIDExist(userId uuid.UUID) bool {
 	return true
 }
 
-func GetLastUpdate(userId uuid.UUID) (int64, error) {
+func GetLastAuthUpdate(userId uuid.UUID) (int64, error) {
 	userData, err := Db.User.Query().
 		Where(user.UUID(userId), user.DeletedAtIsNil()).
-		Select("updated_at").
+		Select("auth_updated_at").
 		First(context.Background())
 
 	if err != nil {
-		return 0, nil
+		return 0, err
 	}
 
-	return userData.UpdatedAt.Unix(), nil
+	return userData.AuthUpdatedAt.Unix(), nil
 }
 func IsUserDeleted(userData *ent.User) bool {
 	return userData.DeletedAt.Unix() != -62135596800
+}
+
+func VerifyUserEmail(userId uuid.UUID) error {
+	_, err := Db.User.Update().Where(user.UUID(userId)).SetVerified(true).Save(context.Background())
+	return err
 }

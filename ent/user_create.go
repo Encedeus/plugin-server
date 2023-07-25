@@ -77,6 +77,20 @@ func (uc *UserCreate) SetNillableDeletedAt(t *time.Time) *UserCreate {
 	return uc
 }
 
+// SetAuthUpdatedAt sets the "auth_updated_at" field.
+func (uc *UserCreate) SetAuthUpdatedAt(t time.Time) *UserCreate {
+	uc.mutation.SetAuthUpdatedAt(t)
+	return uc
+}
+
+// SetNillableAuthUpdatedAt sets the "auth_updated_at" field if the given value is not nil.
+func (uc *UserCreate) SetNillableAuthUpdatedAt(t *time.Time) *UserCreate {
+	if t != nil {
+		uc.SetAuthUpdatedAt(*t)
+	}
+	return uc
+}
+
 // SetEmail sets the "email" field.
 func (uc *UserCreate) SetEmail(s string) *UserCreate {
 	uc.mutation.SetEmail(s)
@@ -92,6 +106,20 @@ func (uc *UserCreate) SetName(s string) *UserCreate {
 // SetPassword sets the "password" field.
 func (uc *UserCreate) SetPassword(s string) *UserCreate {
 	uc.mutation.SetPassword(s)
+	return uc
+}
+
+// SetVerified sets the "verified" field.
+func (uc *UserCreate) SetVerified(b bool) *UserCreate {
+	uc.mutation.SetVerified(b)
+	return uc
+}
+
+// SetNillableVerified sets the "verified" field if the given value is not nil.
+func (uc *UserCreate) SetNillableVerified(b *bool) *UserCreate {
+	if b != nil {
+		uc.SetVerified(*b)
+	}
 	return uc
 }
 
@@ -142,6 +170,14 @@ func (uc *UserCreate) defaults() {
 		v := user.DefaultUpdatedAt()
 		uc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := uc.mutation.AuthUpdatedAt(); !ok {
+		v := user.DefaultAuthUpdatedAt()
+		uc.mutation.SetAuthUpdatedAt(v)
+	}
+	if _, ok := uc.mutation.Verified(); !ok {
+		v := user.DefaultVerified
+		uc.mutation.SetVerified(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -173,6 +209,9 @@ func (uc *UserCreate) check() error {
 	}
 	if _, ok := uc.mutation.Password(); !ok {
 		return &ValidationError{Name: "password", err: errors.New(`ent: missing required field "User.password"`)}
+	}
+	if _, ok := uc.mutation.Verified(); !ok {
+		return &ValidationError{Name: "verified", err: errors.New(`ent: missing required field "User.verified"`)}
 	}
 	return nil
 }
@@ -216,6 +255,10 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldDeletedAt, field.TypeTime, value)
 		_node.DeletedAt = value
 	}
+	if value, ok := uc.mutation.AuthUpdatedAt(); ok {
+		_spec.SetField(user.FieldAuthUpdatedAt, field.TypeTime, value)
+		_node.AuthUpdatedAt = value
+	}
 	if value, ok := uc.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 		_node.Email = value
@@ -227,6 +270,10 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
 		_node.Password = value
+	}
+	if value, ok := uc.mutation.Verified(); ok {
+		_spec.SetField(user.FieldVerified, field.TypeBool, value)
+		_node.Verified = value
 	}
 	return _node, _spec
 }

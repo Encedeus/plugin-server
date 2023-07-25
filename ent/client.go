@@ -11,6 +11,7 @@ import (
 	"PluginServer/ent/migrate"
 
 	"PluginServer/ent/user"
+	"PluginServer/ent/verifysession"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
@@ -24,6 +25,8 @@ type Client struct {
 	Schema *migrate.Schema
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// VerifySession is the client for interacting with the VerifySession builders.
+	VerifySession *VerifySessionClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -38,6 +41,7 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.User = NewUserClient(c.config)
+	c.VerifySession = NewVerifySessionClient(c.config)
 }
 
 type (
@@ -118,9 +122,10 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		User:   NewUserClient(cfg),
+		ctx:           ctx,
+		config:        cfg,
+		User:          NewUserClient(cfg),
+		VerifySession: NewVerifySessionClient(cfg),
 	}, nil
 }
 
@@ -138,9 +143,10 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		User:   NewUserClient(cfg),
+		ctx:           ctx,
+		config:        cfg,
+		User:          NewUserClient(cfg),
+		VerifySession: NewVerifySessionClient(cfg),
 	}, nil
 }
 
@@ -170,12 +176,14 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.User.Use(hooks...)
+	c.VerifySession.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.User.Intercept(interceptors...)
+	c.VerifySession.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -183,6 +191,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
+	case *VerifySessionMutation:
+		return c.VerifySession.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -306,12 +316,130 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 	}
 }
 
+// VerifySessionClient is a client for the VerifySession schema.
+type VerifySessionClient struct {
+	config
+}
+
+// NewVerifySessionClient returns a client for the VerifySession from the given config.
+func NewVerifySessionClient(c config) *VerifySessionClient {
+	return &VerifySessionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `verifysession.Hooks(f(g(h())))`.
+func (c *VerifySessionClient) Use(hooks ...Hook) {
+	c.hooks.VerifySession = append(c.hooks.VerifySession, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `verifysession.Intercept(f(g(h())))`.
+func (c *VerifySessionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.VerifySession = append(c.inters.VerifySession, interceptors...)
+}
+
+// Create returns a builder for creating a VerifySession entity.
+func (c *VerifySessionClient) Create() *VerifySessionCreate {
+	mutation := newVerifySessionMutation(c.config, OpCreate)
+	return &VerifySessionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of VerifySession entities.
+func (c *VerifySessionClient) CreateBulk(builders ...*VerifySessionCreate) *VerifySessionCreateBulk {
+	return &VerifySessionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for VerifySession.
+func (c *VerifySessionClient) Update() *VerifySessionUpdate {
+	mutation := newVerifySessionMutation(c.config, OpUpdate)
+	return &VerifySessionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *VerifySessionClient) UpdateOne(vs *VerifySession) *VerifySessionUpdateOne {
+	mutation := newVerifySessionMutation(c.config, OpUpdateOne, withVerifySession(vs))
+	return &VerifySessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *VerifySessionClient) UpdateOneID(id int) *VerifySessionUpdateOne {
+	mutation := newVerifySessionMutation(c.config, OpUpdateOne, withVerifySessionID(id))
+	return &VerifySessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for VerifySession.
+func (c *VerifySessionClient) Delete() *VerifySessionDelete {
+	mutation := newVerifySessionMutation(c.config, OpDelete)
+	return &VerifySessionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *VerifySessionClient) DeleteOne(vs *VerifySession) *VerifySessionDeleteOne {
+	return c.DeleteOneID(vs.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *VerifySessionClient) DeleteOneID(id int) *VerifySessionDeleteOne {
+	builder := c.Delete().Where(verifysession.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &VerifySessionDeleteOne{builder}
+}
+
+// Query returns a query builder for VerifySession.
+func (c *VerifySessionClient) Query() *VerifySessionQuery {
+	return &VerifySessionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeVerifySession},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a VerifySession entity by its id.
+func (c *VerifySessionClient) Get(ctx context.Context, id int) (*VerifySession, error) {
+	return c.Query().Where(verifysession.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *VerifySessionClient) GetX(ctx context.Context, id int) *VerifySession {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *VerifySessionClient) Hooks() []Hook {
+	return c.hooks.VerifySession
+}
+
+// Interceptors returns the client interceptors.
+func (c *VerifySessionClient) Interceptors() []Interceptor {
+	return c.inters.VerifySession
+}
+
+func (c *VerifySessionClient) mutate(ctx context.Context, m *VerifySessionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&VerifySessionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&VerifySessionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&VerifySessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&VerifySessionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown VerifySession mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		User []ent.Hook
+		User, VerifySession []ent.Hook
 	}
 	inters struct {
-		User []ent.Interceptor
+		User, VerifySession []ent.Interceptor
 	}
 )

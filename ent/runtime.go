@@ -5,6 +5,7 @@ package ent
 import (
 	"PluginServer/ent/schema"
 	"PluginServer/ent/user"
+	"PluginServer/ent/verifysession"
 	"time"
 
 	"github.com/google/uuid"
@@ -30,12 +31,26 @@ func init() {
 	user.DefaultUpdatedAt = userDescUpdatedAt.Default.(func() time.Time)
 	// user.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	user.UpdateDefaultUpdatedAt = userDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// userDescAuthUpdatedAt is the schema descriptor for auth_updated_at field.
+	userDescAuthUpdatedAt := userFields[4].Descriptor()
+	// user.DefaultAuthUpdatedAt holds the default value on creation for the auth_updated_at field.
+	user.DefaultAuthUpdatedAt = userDescAuthUpdatedAt.Default.(func() time.Time)
 	// userDescEmail is the schema descriptor for email field.
-	userDescEmail := userFields[4].Descriptor()
+	userDescEmail := userFields[5].Descriptor()
 	// user.EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	user.EmailValidator = userDescEmail.Validators[0].(func(string) error)
 	// userDescName is the schema descriptor for name field.
-	userDescName := userFields[5].Descriptor()
+	userDescName := userFields[6].Descriptor()
 	// user.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	user.NameValidator = userDescName.Validators[0].(func(string) error)
+	// userDescVerified is the schema descriptor for verified field.
+	userDescVerified := userFields[8].Descriptor()
+	// user.DefaultVerified holds the default value on creation for the verified field.
+	user.DefaultVerified = userDescVerified.Default.(bool)
+	verifysessionFields := schema.VerifySession{}.Fields()
+	_ = verifysessionFields
+	// verifysessionDescSid is the schema descriptor for sid field.
+	verifysessionDescSid := verifysessionFields[0].Descriptor()
+	// verifysession.DefaultSid holds the default value on creation for the sid field.
+	verifysession.DefaultSid = verifysessionDescSid.Default.(func() uuid.UUID)
 }

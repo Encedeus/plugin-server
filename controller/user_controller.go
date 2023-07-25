@@ -17,6 +17,7 @@ import (
 	"net/mail"
 	"os"
 	"strings"
+	"time"
 )
 
 func init() {
@@ -32,6 +33,8 @@ func init() {
 		userEndpoint.PUT("", setPfp)
 		userEndpoint.PATCH("", handleUpdateUser)
 		userEndpoint.DELETE("", handleDeleteUser)
+		userEndpoint.GET("/verify", verifyEmail)
+		userEndpoint.GET("/resend", resendVerificationEmail)
 	})
 }
 
@@ -107,10 +110,26 @@ func handleCreateUser(ctx echo.Context) error {
 		})
 	}
 
-	err = email.SendVerificationEmail(userInfo.Email)
+	// start a session for email verification
+	sessionId, err := service.StartVerifySession(*userId)
+	fmt.Println(sessionId)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "internal server error",
+		})
+	}
+
+	// close session after 3 min
+	time.AfterFunc(time.Minute*3, func() {
+		service.CloseVerifySession(sessionId)
+	})
+
+	err = email.SendVerificationEmail(userInfo.Email, sessionId)
 
 	if err != nil {
-		return err
+		return ctx.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "internal server error",
+		})
 	}
 
 	return ctx.JSON(http.StatusCreated, echo.Map{"uuid": userId.String()})
@@ -232,4 +251,73 @@ func handleDeleteUser(ctx echo.Context) error {
 	}
 
 	return ctx.NoContent(http.StatusOK)
+}
+
+func verifyEmail(ctx echo.Context) error {
+
+	userId, _ := uuid.Parse(ctx.Request().Header.Get("UUID"))
+	sessionId, _ := uuid.Parse(ctx.QueryParam("sid"))
+
+	err := service.CloseVerifySession(sessionId)
+
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return ctx.JSON(http.StatusNotFound, echo.Map{"message": "session not found"})
+		}
+
+		log.Errorf("uncaught error closing verify session: %v", err)
+
+		return ctx.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "internal server error",
+		})
+	}
+
+	err = service.VerifyUserEmail(userId)
+
+	if err != nil {
+		log.Errorf("uncaught error verifying user email: %v", err)
+
+		return ctx.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "internal server error",
+		})
+	}
+
+	return ctx.NoContent(200)
+}
+
+func resendVerificationEmail(ctx echo.Context) error {
+
+	userId, _ := uuid.Parse(ctx.Request().Header.Get("UUID"))
+	user, _ := service.GetUser(userId)
+
+	if user.Verified {
+		return ctx.JSON(http.StatusConflict, echo.Map{"message": "user already verified"})
+	}
+
+	// close any existing sessions
+	service.CloseVerifySessionByUserId(userId)
+	sessionId, err := service.StartVerifySession(userId)
+
+	if err != nil {
+		log.Errorf("uncaught error starting verify session: %v", err)
+		return ctx.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "internal server error",
+		})
+	}
+
+	// close session after 3 min
+	time.AfterFunc(time.Minute*3, func() {
+		service.CloseVerifySession(sessionId)
+	})
+
+	err = email.SendVerificationEmail(user.Email, sessionId)
+
+	if err != nil {
+		log.Errorf("uncaught error sending user email: %v", err)
+		return ctx.JSON(http.StatusInternalServerError, echo.Map{
+			"message": "internal server error",
+		})
+	}
+
+	return ctx.NoContent(200)
 }

@@ -82,7 +82,7 @@ func ValidateAccessJWT(tokenString string) (bool, dto.AccessTokenDTO, error) {
 		return false, claims, err
 	}
 
-	isUpdated, err := IsUserUpdated(claims.UserId, claims.IssuedAt)
+	isUpdated, err := IsUserAuthUpdated(claims.UserId, claims.IssuedAt)
 	if err != nil || isUpdated {
 		return false, claims, err
 	}
@@ -105,7 +105,7 @@ func ValidateRefreshJWT(tokenString string) (bool, dto.RefreshTokenDTO, error) {
 		return false, claims, err
 	}
 
-	isUpdated, err := IsUserUpdated(claims.UserId, claims.IssuedAt)
+	isUpdated, err := IsUserAuthUpdated(claims.UserId, claims.IssuedAt)
 	if err != nil || isUpdated {
 		return false, claims, err
 	}
@@ -113,10 +113,10 @@ func ValidateRefreshJWT(tokenString string) (bool, dto.RefreshTokenDTO, error) {
 	return true, claims, err
 }
 
-func IsUserUpdated(userId uuid.UUID, issuedAt int64) (bool, error) {
-	lastUpdate, err := service.GetLastUpdate(userId)
+func IsUserAuthUpdated(userId uuid.UUID, issuedAt int64) (bool, error) {
+	lastUpdate, err := service.GetLastAuthUpdate(userId)
 	if err != nil {
-		return false, err
+		return true, err
 	}
 
 	if lastUpdate > issuedAt {

@@ -11,11 +11,3 @@ type UpdateUserDTO struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
-
-/*type DeleteUserDTO struct {
-	UserId uuid.UUID `json:"id"`
-}*/
-
-/*type GetUserDTO struct {
-	UserId uuid.UUID `json:"id"`
-}*/

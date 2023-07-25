@@ -15,13 +15,15 @@ type User struct {
 // Fields of the User.
 func (User) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("uuid", uuid.UUID{}).Default(uuid.New),
-		field.Time("created_at").Default(time.Now),
+		field.UUID("uuid", uuid.UUID{}).Default(uuid.New).Immutable(),
+		field.Time("created_at").Default(time.Now).Immutable(),
 		field.Time("updated_at").UpdateDefault(time.Now).Default(time.Now),
 		field.Time("deleted_at").Optional(),
+		field.Time("auth_updated_at").Optional().Default(time.Now),
 		field.String("email").MaxLen(32).Unique(),
 		field.String("name").MaxLen(32).Unique(),
 		field.String("password"),
+		field.Bool("verified").Default(false),
 	}
 }
 

@@ -75,6 +75,11 @@ func DeletedAt(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldDeletedAt, v))
 }
 
+// AuthUpdatedAt applies equality check predicate on the "auth_updated_at" field. It's identical to AuthUpdatedAtEQ.
+func AuthUpdatedAt(v time.Time) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldAuthUpdatedAt, v))
+}
+
 // Email applies equality check predicate on the "email" field. It's identical to EmailEQ.
 func Email(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldEmail, v))
@@ -88,6 +93,11 @@ func Name(v string) predicate.User {
 // Password applies equality check predicate on the "password" field. It's identical to PasswordEQ.
 func Password(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldPassword, v))
+}
+
+// Verified applies equality check predicate on the "verified" field. It's identical to VerifiedEQ.
+func Verified(v bool) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldVerified, v))
 }
 
 // UUIDEQ applies the EQ predicate on the "uuid" field.
@@ -258,6 +268,56 @@ func DeletedAtIsNil() predicate.User {
 // DeletedAtNotNil applies the NotNil predicate on the "deleted_at" field.
 func DeletedAtNotNil() predicate.User {
 	return predicate.User(sql.FieldNotNull(FieldDeletedAt))
+}
+
+// AuthUpdatedAtEQ applies the EQ predicate on the "auth_updated_at" field.
+func AuthUpdatedAtEQ(v time.Time) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldAuthUpdatedAt, v))
+}
+
+// AuthUpdatedAtNEQ applies the NEQ predicate on the "auth_updated_at" field.
+func AuthUpdatedAtNEQ(v time.Time) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldAuthUpdatedAt, v))
+}
+
+// AuthUpdatedAtIn applies the In predicate on the "auth_updated_at" field.
+func AuthUpdatedAtIn(vs ...time.Time) predicate.User {
+	return predicate.User(sql.FieldIn(FieldAuthUpdatedAt, vs...))
+}
+
+// AuthUpdatedAtNotIn applies the NotIn predicate on the "auth_updated_at" field.
+func AuthUpdatedAtNotIn(vs ...time.Time) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldAuthUpdatedAt, vs...))
+}
+
+// AuthUpdatedAtGT applies the GT predicate on the "auth_updated_at" field.
+func AuthUpdatedAtGT(v time.Time) predicate.User {
+	return predicate.User(sql.FieldGT(FieldAuthUpdatedAt, v))
+}
+
+// AuthUpdatedAtGTE applies the GTE predicate on the "auth_updated_at" field.
+func AuthUpdatedAtGTE(v time.Time) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldAuthUpdatedAt, v))
+}
+
+// AuthUpdatedAtLT applies the LT predicate on the "auth_updated_at" field.
+func AuthUpdatedAtLT(v time.Time) predicate.User {
+	return predicate.User(sql.FieldLT(FieldAuthUpdatedAt, v))
+}
+
+// AuthUpdatedAtLTE applies the LTE predicate on the "auth_updated_at" field.
+func AuthUpdatedAtLTE(v time.Time) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldAuthUpdatedAt, v))
+}
+
+// AuthUpdatedAtIsNil applies the IsNil predicate on the "auth_updated_at" field.
+func AuthUpdatedAtIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldAuthUpdatedAt))
+}
+
+// AuthUpdatedAtNotNil applies the NotNil predicate on the "auth_updated_at" field.
+func AuthUpdatedAtNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldAuthUpdatedAt))
 }
 
 // EmailEQ applies the EQ predicate on the "email" field.
@@ -453,6 +513,16 @@ func PasswordEqualFold(v string) predicate.User {
 // PasswordContainsFold applies the ContainsFold predicate on the "password" field.
 func PasswordContainsFold(v string) predicate.User {
 	return predicate.User(sql.FieldContainsFold(FieldPassword, v))
+}
+
+// VerifiedEQ applies the EQ predicate on the "verified" field.
+func VerifiedEQ(v bool) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldVerified, v))
+}
+
+// VerifiedNEQ applies the NEQ predicate on the "verified" field.
+func VerifiedNEQ(v bool) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldVerified, v))
 }
 
 // And groups predicates with the AND operator between them.
