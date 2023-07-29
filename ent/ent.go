@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"PluginServer/ent/plugin"
 	"PluginServer/ent/user"
 	"PluginServer/ent/verifysession"
 	"context"
@@ -74,6 +75,7 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
+			plugin.Table:        plugin.ValidColumn,
 			user.Table:          user.ValidColumn,
 			verifysession.Table: verifysession.ValidColumn,
 		})

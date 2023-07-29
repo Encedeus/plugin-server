@@ -6,6 +6,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Plugin is the predicate function for plugin builders.
+type Plugin func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
 

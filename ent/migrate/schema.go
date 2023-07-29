@@ -8,6 +8,24 @@ import (
 )
 
 var (
+	// PluginsColumns holds the columns for the "plugins" table.
+	PluginsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString, Unique: true, Size: 32},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 512},
+		{Name: "repo", Type: field.TypeString, Nullable: true},
+		{Name: "homepage", Type: field.TypeString, Nullable: true},
+		{Name: "owner_id", Type: field.TypeUUID},
+		{Name: "contributors", Type: field.TypeJSON},
+	}
+	// PluginsTable holds the schema information for the "plugins" table.
+	PluginsTable = &schema.Table{
+		Name:       "plugins",
+		Columns:    PluginsColumns,
+		PrimaryKey: []*schema.Column{PluginsColumns[0]},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -41,6 +59,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		PluginsTable,
 		UsersTable,
 		VerifySessionsTable,
 	}

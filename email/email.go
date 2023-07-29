@@ -12,14 +12,10 @@ func SendVerificationEmail(receiver string, sessionId uuid.UUID) error {
 	from := config.Config.Credentials.Email
 	to := []string{receiver}
 
-	message := []byte(fmt.Sprintf(
-		`Subject: email verification
-
-<a href="%s">
-<button>verify email</button>
-</a>`,
-		config.Config.Server.URI()+"?sid="+sessionId.String(),
-	))
+	subject := "Subject: Email verification for Encedeus\n"
+	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
+	body := fmt.Sprintf(`<html><body><a href="%s"><button>verify email</button></a></body></html>`, config.Config.Server.URI()+"?sid="+sessionId.String())
+	message := []byte(subject + mime + body)
 
 	// auth
 	auth := smtp.PlainAuth("",
@@ -42,6 +38,5 @@ func SendVerificationEmail(receiver string, sessionId uuid.UUID) error {
 		return err
 	}
 
-	fmt.Println("Email Sent Successfully!")
 	return nil
 }
