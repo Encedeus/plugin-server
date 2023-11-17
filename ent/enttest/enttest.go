@@ -3,14 +3,14 @@
 package enttest
 
 import (
-	"PluginServer/ent"
 	"context"
-	// required by schema hooks.
-	_ "PluginServer/ent/runtime"
 
-	"PluginServer/ent/migrate"
+	"github.com/Encedeus/pluginServer/ent"
+	// required by schema hooks.
+	_ "github.com/Encedeus/pluginServer/ent/runtime"
 
 	"entgo.io/ent/dialect/sql/schema"
+	"github.com/Encedeus/pluginServer/ent/migrate"
 )
 
 type (

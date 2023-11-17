@@ -3,8 +3,6 @@
 package ent
 
 import (
-	"PluginServer/ent/plugin"
-	"PluginServer/ent/predicate"
 	"context"
 	"fmt"
 	"math"
@@ -12,6 +10,11 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/Encedeus/pluginServer/ent/plugin"
+	"github.com/Encedeus/pluginServer/ent/predicate"
+	"github.com/Encedeus/pluginServer/ent/source"
+	"github.com/Encedeus/pluginServer/ent/user"
+	"github.com/google/uuid"
 )
 
 // PluginQuery is the builder for querying Plugin entities.
@@ -21,6 +24,8 @@ type PluginQuery struct {
 	order      []plugin.OrderOption
 	inters     []Interceptor
 	predicates []predicate.Plugin
+	withOwner  *UserQuery
+	withSource *SourceQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -57,6 +62,50 @@ func (pq *PluginQuery) Order(o ...plugin.OrderOption) *PluginQuery {
 	return pq
 }
 
+// QueryOwner chains the current query on the "owner" edge.
+func (pq *PluginQuery) QueryOwner() *UserQuery {
+	query := (&UserClient{config: pq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := pq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := pq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(plugin.Table, plugin.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, plugin.OwnerTable, plugin.OwnerColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QuerySource chains the current query on the "source" edge.
+func (pq *PluginQuery) QuerySource() *SourceQuery {
+	query := (&SourceClient{config: pq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := pq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := pq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(plugin.Table, plugin.FieldID, selector),
+			sqlgraph.To(source.Table, source.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, plugin.SourceTable, plugin.SourceColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first Plugin entity from the query.
 // Returns a *NotFoundError when no Plugin was found.
 func (pq *PluginQuery) First(ctx context.Context) (*Plugin, error) {
@@ -81,8 +130,8 @@ func (pq *PluginQuery) FirstX(ctx context.Context) *Plugin {
 
 // FirstID returns the first Plugin ID from the query.
 // Returns a *NotFoundError when no Plugin ID was found.
-func (pq *PluginQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (pq *PluginQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+	var ids []uuid.UUID
 	if ids, err = pq.Limit(1).IDs(setContextOp(ctx, pq.ctx, "FirstID")); err != nil {
 		return
 	}
@@ -94,7 +143,7 @@ func (pq *PluginQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (pq *PluginQuery) FirstIDX(ctx context.Context) int {
+func (pq *PluginQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := pq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -132,8 +181,8 @@ func (pq *PluginQuery) OnlyX(ctx context.Context) *Plugin {
 // OnlyID is like Only, but returns the only Plugin ID in the query.
 // Returns a *NotSingularError when more than one Plugin ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (pq *PluginQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (pq *PluginQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+	var ids []uuid.UUID
 	if ids, err = pq.Limit(2).IDs(setContextOp(ctx, pq.ctx, "OnlyID")); err != nil {
 		return
 	}
@@ -149,7 +198,7 @@ func (pq *PluginQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (pq *PluginQuery) OnlyIDX(ctx context.Context) int {
+func (pq *PluginQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := pq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -177,7 +226,7 @@ func (pq *PluginQuery) AllX(ctx context.Context) []*Plugin {
 }
 
 // IDs executes the query and returns a list of Plugin IDs.
-func (pq *PluginQuery) IDs(ctx context.Context) (ids []int, err error) {
+func (pq *PluginQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
 	if pq.ctx.Unique == nil && pq.path != nil {
 		pq.Unique(true)
 	}
@@ -189,7 +238,7 @@ func (pq *PluginQuery) IDs(ctx context.Context) (ids []int, err error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (pq *PluginQuery) IDsX(ctx context.Context) []int {
+func (pq *PluginQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := pq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -249,10 +298,34 @@ func (pq *PluginQuery) Clone() *PluginQuery {
 		order:      append([]plugin.OrderOption{}, pq.order...),
 		inters:     append([]Interceptor{}, pq.inters...),
 		predicates: append([]predicate.Plugin{}, pq.predicates...),
+		withOwner:  pq.withOwner.Clone(),
+		withSource: pq.withSource.Clone(),
 		// clone intermediate query.
 		sql:  pq.sql.Clone(),
 		path: pq.path,
 	}
+}
+
+// WithOwner tells the query-builder to eager-load the nodes that are connected to
+// the "owner" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *PluginQuery) WithOwner(opts ...func(*UserQuery)) *PluginQuery {
+	query := (&UserClient{config: pq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	pq.withOwner = query
+	return pq
+}
+
+// WithSource tells the query-builder to eager-load the nodes that are connected to
+// the "source" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *PluginQuery) WithSource(opts ...func(*SourceQuery)) *PluginQuery {
+	query := (&SourceClient{config: pq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	pq.withSource = query
+	return pq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -261,12 +334,12 @@ func (pq *PluginQuery) Clone() *PluginQuery {
 // Example:
 //
 //	var v []struct {
-//		CreatedAt time.Time `json:"created_at,omitempty"`
+//		Name string `json:"name,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Plugin.Query().
-//		GroupBy(plugin.FieldCreatedAt).
+//		GroupBy(plugin.FieldName).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (pq *PluginQuery) GroupBy(field string, fields ...string) *PluginGroupBy {
@@ -284,11 +357,11 @@ func (pq *PluginQuery) GroupBy(field string, fields ...string) *PluginGroupBy {
 // Example:
 //
 //	var v []struct {
-//		CreatedAt time.Time `json:"created_at,omitempty"`
+//		Name string `json:"name,omitempty"`
 //	}
 //
 //	client.Plugin.Query().
-//		Select(plugin.FieldCreatedAt).
+//		Select(plugin.FieldName).
 //		Scan(ctx, &v)
 func (pq *PluginQuery) Select(fields ...string) *PluginSelect {
 	pq.ctx.Fields = append(pq.ctx.Fields, fields...)
@@ -331,8 +404,12 @@ func (pq *PluginQuery) prepareQuery(ctx context.Context) error {
 
 func (pq *PluginQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Plugin, error) {
 	var (
-		nodes = []*Plugin{}
-		_spec = pq.querySpec()
+		nodes       = []*Plugin{}
+		_spec       = pq.querySpec()
+		loadedTypes = [2]bool{
+			pq.withOwner != nil,
+			pq.withSource != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Plugin).scanValues(nil, columns)
@@ -340,6 +417,7 @@ func (pq *PluginQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Plugi
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Plugin{config: pq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -351,7 +429,78 @@ func (pq *PluginQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Plugi
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := pq.withOwner; query != nil {
+		if err := pq.loadOwner(ctx, query, nodes, nil,
+			func(n *Plugin, e *User) { n.Edges.Owner = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := pq.withSource; query != nil {
+		if err := pq.loadSource(ctx, query, nodes, nil,
+			func(n *Plugin, e *Source) { n.Edges.Source = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (pq *PluginQuery) loadOwner(ctx context.Context, query *UserQuery, nodes []*Plugin, init func(*Plugin), assign func(*Plugin, *User)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Plugin)
+	for i := range nodes {
+		fk := nodes[i].OwnerID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(user.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "owner_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (pq *PluginQuery) loadSource(ctx context.Context, query *SourceQuery, nodes []*Plugin, init func(*Plugin), assign func(*Plugin, *Source)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Plugin)
+	for i := range nodes {
+		fk := nodes[i].SourceID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(source.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "source_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
 }
 
 func (pq *PluginQuery) sqlCount(ctx context.Context) (int, error) {
@@ -364,7 +513,7 @@ func (pq *PluginQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (pq *PluginQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(plugin.Table, plugin.Columns, sqlgraph.NewFieldSpec(plugin.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewQuerySpec(plugin.Table, plugin.Columns, sqlgraph.NewFieldSpec(plugin.FieldID, field.TypeUUID))
 	_spec.From = pq.sql
 	if unique := pq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -378,6 +527,12 @@ func (pq *PluginQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != plugin.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if pq.withOwner != nil {
+			_spec.Node.AddColumnOnce(plugin.FieldOwnerID)
+		}
+		if pq.withSource != nil {
+			_spec.Node.AddColumnOnce(plugin.FieldSourceID)
 		}
 	}
 	if ps := pq.predicates; len(ps) > 0 {

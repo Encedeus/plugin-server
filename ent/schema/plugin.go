@@ -2,31 +2,35 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
-	"time"
 )
 
-// Plugin holds the schema definition for the User entity.
+// Source holds the schema definition for the Source entity.
 type Plugin struct {
 	ent.Schema
 }
 
-// Fields of the Plugin.
+// Fields of the Source.
 func (Plugin) Fields() []ent.Field {
 	return []ent.Field{
-		field.Time("created_at").Default(time.Now).Immutable(),
-		field.Time("updated_at").UpdateDefault(time.Now).Default(time.Now),
-		field.String("name").MaxLen(32).Unique(),
-		field.String("description").MaxLen(512).Optional(),
-		field.String("repo").Optional(),
-		field.String("homepage").Optional(),
+		field.UUID("id", uuid.UUID{}).Default(uuid.New),
+		field.String("name").Unique(),
 		field.UUID("owner_id", uuid.UUID{}),
-		field.Strings("contributors"),
+		field.Int("source_id"),
 	}
 }
 
-// Edges of the Plugin.
 func (Plugin) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("owner", User.Type).
+			Field("owner_id").
+			Unique().
+			Required(),
+		edge.To("source", Source.Type).
+			Field("source_id").
+			Unique().
+			Required(),
+	}
 }

@@ -3,14 +3,14 @@
 package ent
 
 import (
-	"PluginServer/ent/plugin"
-	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/Encedeus/pluginServer/ent/plugin"
+	"github.com/Encedeus/pluginServer/ent/source"
+	"github.com/Encedeus/pluginServer/ent/user"
 	"github.com/google/uuid"
 )
 
@@ -18,24 +18,54 @@ import (
 type Plugin struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
-	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt time.Time `json:"created_at,omitempty"`
-	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	ID uuid.UUID `json:"id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
-	// Description holds the value of the "description" field.
-	Description string `json:"description,omitempty"`
-	// Repo holds the value of the "repo" field.
-	Repo string `json:"repo,omitempty"`
-	// Homepage holds the value of the "homepage" field.
-	Homepage string `json:"homepage,omitempty"`
 	// OwnerID holds the value of the "owner_id" field.
 	OwnerID uuid.UUID `json:"owner_id,omitempty"`
-	// Contributors holds the value of the "contributors" field.
-	Contributors []string `json:"contributors,omitempty"`
+	// SourceID holds the value of the "source_id" field.
+	SourceID int `json:"source_id,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the PluginQuery when eager-loading is set.
+	Edges        PluginEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// PluginEdges holds the relations/edges for other nodes in the graph.
+type PluginEdges struct {
+	// Owner holds the value of the owner edge.
+	Owner *User `json:"owner,omitempty"`
+	// Source holds the value of the source edge.
+	Source *Source `json:"source,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [2]bool
+}
+
+// OwnerOrErr returns the Owner value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e PluginEdges) OwnerOrErr() (*User, error) {
+	if e.loadedTypes[0] {
+		if e.Owner == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: user.Label}
+		}
+		return e.Owner, nil
+	}
+	return nil, &NotLoadedError{edge: "owner"}
+}
+
+// SourceOrErr returns the Source value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e PluginEdges) SourceOrErr() (*Source, error) {
+	if e.loadedTypes[1] {
+		if e.Source == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: source.Label}
+		}
+		return e.Source, nil
+	}
+	return nil, &NotLoadedError{edge: "source"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -43,15 +73,11 @@ func (*Plugin) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case plugin.FieldContributors:
-			values[i] = new([]byte)
-		case plugin.FieldID:
+		case plugin.FieldSourceID:
 			values[i] = new(sql.NullInt64)
-		case plugin.FieldName, plugin.FieldDescription, plugin.FieldRepo, plugin.FieldHomepage:
+		case plugin.FieldName:
 			values[i] = new(sql.NullString)
-		case plugin.FieldCreatedAt, plugin.FieldUpdatedAt:
-			values[i] = new(sql.NullTime)
-		case plugin.FieldOwnerID:
+		case plugin.FieldID, plugin.FieldOwnerID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -69,22 +95,10 @@ func (pl *Plugin) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case plugin.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
-			}
-			pl.ID = int(value.Int64)
-		case plugin.FieldCreatedAt:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field created_at", values[i])
-			} else if value.Valid {
-				pl.CreatedAt = value.Time
-			}
-		case plugin.FieldUpdatedAt:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
-			} else if value.Valid {
-				pl.UpdatedAt = value.Time
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value != nil {
+				pl.ID = *value
 			}
 		case plugin.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -92,37 +106,17 @@ func (pl *Plugin) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				pl.Name = value.String
 			}
-		case plugin.FieldDescription:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field description", values[i])
-			} else if value.Valid {
-				pl.Description = value.String
-			}
-		case plugin.FieldRepo:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field repo", values[i])
-			} else if value.Valid {
-				pl.Repo = value.String
-			}
-		case plugin.FieldHomepage:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field homepage", values[i])
-			} else if value.Valid {
-				pl.Homepage = value.String
-			}
 		case plugin.FieldOwnerID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field owner_id", values[i])
 			} else if value != nil {
 				pl.OwnerID = *value
 			}
-		case plugin.FieldContributors:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field contributors", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &pl.Contributors); err != nil {
-					return fmt.Errorf("unmarshal field contributors: %w", err)
-				}
+		case plugin.FieldSourceID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field source_id", values[i])
+			} else if value.Valid {
+				pl.SourceID = int(value.Int64)
 			}
 		default:
 			pl.selectValues.Set(columns[i], values[i])
@@ -135,6 +129,16 @@ func (pl *Plugin) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (pl *Plugin) Value(name string) (ent.Value, error) {
 	return pl.selectValues.Get(name)
+}
+
+// QueryOwner queries the "owner" edge of the Plugin entity.
+func (pl *Plugin) QueryOwner() *UserQuery {
+	return NewPluginClient(pl.config).QueryOwner(pl)
+}
+
+// QuerySource queries the "source" edge of the Plugin entity.
+func (pl *Plugin) QuerySource() *SourceQuery {
+	return NewPluginClient(pl.config).QuerySource(pl)
 }
 
 // Update returns a builder for updating this Plugin.
@@ -160,29 +164,14 @@ func (pl *Plugin) String() string {
 	var builder strings.Builder
 	builder.WriteString("Plugin(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", pl.ID))
-	builder.WriteString("created_at=")
-	builder.WriteString(pl.CreatedAt.Format(time.ANSIC))
-	builder.WriteString(", ")
-	builder.WriteString("updated_at=")
-	builder.WriteString(pl.UpdatedAt.Format(time.ANSIC))
-	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(pl.Name)
-	builder.WriteString(", ")
-	builder.WriteString("description=")
-	builder.WriteString(pl.Description)
-	builder.WriteString(", ")
-	builder.WriteString("repo=")
-	builder.WriteString(pl.Repo)
-	builder.WriteString(", ")
-	builder.WriteString("homepage=")
-	builder.WriteString(pl.Homepage)
 	builder.WriteString(", ")
 	builder.WriteString("owner_id=")
 	builder.WriteString(fmt.Sprintf("%v", pl.OwnerID))
 	builder.WriteString(", ")
-	builder.WriteString("contributors=")
-	builder.WriteString(fmt.Sprintf("%v", pl.Contributors))
+	builder.WriteString("source_id=")
+	builder.WriteString(fmt.Sprintf("%v", pl.SourceID))
 	builder.WriteByte(')')
 	return builder.String()
 }

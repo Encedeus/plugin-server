@@ -7,16 +7,18 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"reflect"
 
-	"PluginServer/ent/migrate"
-
-	"PluginServer/ent/plugin"
-	"PluginServer/ent/user"
-	"PluginServer/ent/verifysession"
+	"github.com/Encedeus/pluginServer/ent/migrate"
+	"github.com/google/uuid"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/Encedeus/pluginServer/ent/plugin"
+	"github.com/Encedeus/pluginServer/ent/source"
+	"github.com/Encedeus/pluginServer/ent/user"
 )
 
 // Client is the client that holds all ent builders.
@@ -26,10 +28,10 @@ type Client struct {
 	Schema *migrate.Schema
 	// Plugin is the client for interacting with the Plugin builders.
 	Plugin *PluginClient
+	// Source is the client for interacting with the Source builders.
+	Source *SourceClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
-	// VerifySession is the client for interacting with the VerifySession builders.
-	VerifySession *VerifySessionClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -44,8 +46,8 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Plugin = NewPluginClient(c.config)
+	c.Source = NewSourceClient(c.config)
 	c.User = NewUserClient(c.config)
-	c.VerifySession = NewVerifySessionClient(c.config)
 }
 
 type (
@@ -113,11 +115,14 @@ func Open(driverName, dataSourceName string, options ...Option) (*Client, error)
 	}
 }
 
+// ErrTxStarted is returned when trying to start a new transaction from a transactional client.
+var ErrTxStarted = errors.New("ent: cannot start a transaction within a transaction")
+
 // Tx returns a new transactional client. The provided context
 // is used until the transaction is committed or rolled back.
 func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	if _, ok := c.driver.(*txDriver); ok {
-		return nil, errors.New("ent: cannot start a transaction within a transaction")
+		return nil, ErrTxStarted
 	}
 	tx, err := newTx(ctx, c.driver)
 	if err != nil {
@@ -126,11 +131,11 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:           ctx,
-		config:        cfg,
-		Plugin:        NewPluginClient(cfg),
-		User:          NewUserClient(cfg),
-		VerifySession: NewVerifySessionClient(cfg),
+		ctx:    ctx,
+		config: cfg,
+		Plugin: NewPluginClient(cfg),
+		Source: NewSourceClient(cfg),
+		User:   NewUserClient(cfg),
 	}, nil
 }
 
@@ -148,11 +153,11 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:           ctx,
-		config:        cfg,
-		Plugin:        NewPluginClient(cfg),
-		User:          NewUserClient(cfg),
-		VerifySession: NewVerifySessionClient(cfg),
+		ctx:    ctx,
+		config: cfg,
+		Plugin: NewPluginClient(cfg),
+		Source: NewSourceClient(cfg),
+		User:   NewUserClient(cfg),
 	}, nil
 }
 
@@ -182,16 +187,16 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.Plugin.Use(hooks...)
+	c.Source.Use(hooks...)
 	c.User.Use(hooks...)
-	c.VerifySession.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.Plugin.Intercept(interceptors...)
+	c.Source.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
-	c.VerifySession.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -199,10 +204,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *PluginMutation:
 		return c.Plugin.mutate(ctx, m)
+	case *SourceMutation:
+		return c.Source.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
-	case *VerifySessionMutation:
-		return c.VerifySession.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -241,6 +246,21 @@ func (c *PluginClient) CreateBulk(builders ...*PluginCreate) *PluginCreateBulk {
 	return &PluginCreateBulk{config: c.config, builders: builders}
 }
 
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PluginClient) MapCreateBulk(slice any, setFunc func(*PluginCreate, int)) *PluginCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PluginCreateBulk{err: fmt.Errorf("calling to PluginClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PluginCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PluginCreateBulk{config: c.config, builders: builders}
+}
+
 // Update returns an update builder for Plugin.
 func (c *PluginClient) Update() *PluginUpdate {
 	mutation := newPluginMutation(c.config, OpUpdate)
@@ -254,7 +274,7 @@ func (c *PluginClient) UpdateOne(pl *Plugin) *PluginUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *PluginClient) UpdateOneID(id int) *PluginUpdateOne {
+func (c *PluginClient) UpdateOneID(id uuid.UUID) *PluginUpdateOne {
 	mutation := newPluginMutation(c.config, OpUpdateOne, withPluginID(id))
 	return &PluginUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -271,7 +291,7 @@ func (c *PluginClient) DeleteOne(pl *Plugin) *PluginDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *PluginClient) DeleteOneID(id int) *PluginDeleteOne {
+func (c *PluginClient) DeleteOneID(id uuid.UUID) *PluginDeleteOne {
 	builder := c.Delete().Where(plugin.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -288,17 +308,49 @@ func (c *PluginClient) Query() *PluginQuery {
 }
 
 // Get returns a Plugin entity by its id.
-func (c *PluginClient) Get(ctx context.Context, id int) (*Plugin, error) {
+func (c *PluginClient) Get(ctx context.Context, id uuid.UUID) (*Plugin, error) {
 	return c.Query().Where(plugin.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *PluginClient) GetX(ctx context.Context, id int) *Plugin {
+func (c *PluginClient) GetX(ctx context.Context, id uuid.UUID) *Plugin {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryOwner queries the owner edge of a Plugin.
+func (c *PluginClient) QueryOwner(pl *Plugin) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := pl.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(plugin.Table, plugin.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, plugin.OwnerTable, plugin.OwnerColumn),
+		)
+		fromV = sqlgraph.Neighbors(pl.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySource queries the source edge of a Plugin.
+func (c *PluginClient) QuerySource(pl *Plugin) *SourceQuery {
+	query := (&SourceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := pl.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(plugin.Table, plugin.FieldID, id),
+			sqlgraph.To(source.Table, source.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, plugin.SourceTable, plugin.SourceColumn),
+		)
+		fromV = sqlgraph.Neighbors(pl.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // Hooks returns the client hooks.
@@ -323,6 +375,155 @@ func (c *PluginClient) mutate(ctx context.Context, m *PluginMutation) (Value, er
 		return (&PluginDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Plugin mutation op: %q", m.Op())
+	}
+}
+
+// SourceClient is a client for the Source schema.
+type SourceClient struct {
+	config
+}
+
+// NewSourceClient returns a client for the Source from the given config.
+func NewSourceClient(c config) *SourceClient {
+	return &SourceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `source.Hooks(f(g(h())))`.
+func (c *SourceClient) Use(hooks ...Hook) {
+	c.hooks.Source = append(c.hooks.Source, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `source.Intercept(f(g(h())))`.
+func (c *SourceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Source = append(c.inters.Source, interceptors...)
+}
+
+// Create returns a builder for creating a Source entity.
+func (c *SourceClient) Create() *SourceCreate {
+	mutation := newSourceMutation(c.config, OpCreate)
+	return &SourceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Source entities.
+func (c *SourceClient) CreateBulk(builders ...*SourceCreate) *SourceCreateBulk {
+	return &SourceCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SourceClient) MapCreateBulk(slice any, setFunc func(*SourceCreate, int)) *SourceCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SourceCreateBulk{err: fmt.Errorf("calling to SourceClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SourceCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SourceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Source.
+func (c *SourceClient) Update() *SourceUpdate {
+	mutation := newSourceMutation(c.config, OpUpdate)
+	return &SourceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SourceClient) UpdateOne(s *Source) *SourceUpdateOne {
+	mutation := newSourceMutation(c.config, OpUpdateOne, withSource(s))
+	return &SourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SourceClient) UpdateOneID(id int) *SourceUpdateOne {
+	mutation := newSourceMutation(c.config, OpUpdateOne, withSourceID(id))
+	return &SourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Source.
+func (c *SourceClient) Delete() *SourceDelete {
+	mutation := newSourceMutation(c.config, OpDelete)
+	return &SourceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SourceClient) DeleteOne(s *Source) *SourceDeleteOne {
+	return c.DeleteOneID(s.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SourceClient) DeleteOneID(id int) *SourceDeleteOne {
+	builder := c.Delete().Where(source.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SourceDeleteOne{builder}
+}
+
+// Query returns a query builder for Source.
+func (c *SourceClient) Query() *SourceQuery {
+	return &SourceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSource},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Source entity by its id.
+func (c *SourceClient) Get(ctx context.Context, id int) (*Source, error) {
+	return c.Query().Where(source.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SourceClient) GetX(ctx context.Context, id int) *Source {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPlugin queries the plugin edge of a Source.
+func (c *SourceClient) QueryPlugin(s *Source) *PluginQuery {
+	query := (&PluginClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(source.Table, source.FieldID, id),
+			sqlgraph.To(plugin.Table, plugin.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, source.PluginTable, source.PluginColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *SourceClient) Hooks() []Hook {
+	return c.hooks.Source
+}
+
+// Interceptors returns the client interceptors.
+func (c *SourceClient) Interceptors() []Interceptor {
+	return c.inters.Source
+}
+
+func (c *SourceClient) mutate(ctx context.Context, m *SourceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SourceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SourceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SourceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SourceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Source mutation op: %q", m.Op())
 	}
 }
 
@@ -359,6 +560,21 @@ func (c *UserClient) CreateBulk(builders ...*UserCreate) *UserCreateBulk {
 	return &UserCreateBulk{config: c.config, builders: builders}
 }
 
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *UserClient) MapCreateBulk(slice any, setFunc func(*UserCreate, int)) *UserCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &UserCreateBulk{err: fmt.Errorf("calling to UserClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*UserCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &UserCreateBulk{config: c.config, builders: builders}
+}
+
 // Update returns an update builder for User.
 func (c *UserClient) Update() *UserUpdate {
 	mutation := newUserMutation(c.config, OpUpdate)
@@ -372,7 +588,7 @@ func (c *UserClient) UpdateOne(u *User) *UserUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *UserClient) UpdateOneID(id int) *UserUpdateOne {
+func (c *UserClient) UpdateOneID(id uuid.UUID) *UserUpdateOne {
 	mutation := newUserMutation(c.config, OpUpdateOne, withUserID(id))
 	return &UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -389,7 +605,7 @@ func (c *UserClient) DeleteOne(u *User) *UserDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *UserClient) DeleteOneID(id int) *UserDeleteOne {
+func (c *UserClient) DeleteOneID(id uuid.UUID) *UserDeleteOne {
 	builder := c.Delete().Where(user.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -406,12 +622,12 @@ func (c *UserClient) Query() *UserQuery {
 }
 
 // Get returns a User entity by its id.
-func (c *UserClient) Get(ctx context.Context, id int) (*User, error) {
+func (c *UserClient) Get(ctx context.Context, id uuid.UUID) (*User, error) {
 	return c.Query().Where(user.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *UserClient) GetX(ctx context.Context, id int) *User {
+func (c *UserClient) GetX(ctx context.Context, id uuid.UUID) *User {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -419,9 +635,26 @@ func (c *UserClient) GetX(ctx context.Context, id int) *User {
 	return obj
 }
 
+// QueryPlugin queries the plugin edge of a User.
+func (c *UserClient) QueryPlugin(u *User) *PluginQuery {
+	query := (&PluginClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(plugin.Table, plugin.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, user.PluginTable, user.PluginColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
-	return c.hooks.User
+	hooks := c.hooks.User
+	return append(hooks[:len(hooks):len(hooks)], user.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.
@@ -444,130 +677,12 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 	}
 }
 
-// VerifySessionClient is a client for the VerifySession schema.
-type VerifySessionClient struct {
-	config
-}
-
-// NewVerifySessionClient returns a client for the VerifySession from the given config.
-func NewVerifySessionClient(c config) *VerifySessionClient {
-	return &VerifySessionClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `verifysession.Hooks(f(g(h())))`.
-func (c *VerifySessionClient) Use(hooks ...Hook) {
-	c.hooks.VerifySession = append(c.hooks.VerifySession, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `verifysession.Intercept(f(g(h())))`.
-func (c *VerifySessionClient) Intercept(interceptors ...Interceptor) {
-	c.inters.VerifySession = append(c.inters.VerifySession, interceptors...)
-}
-
-// Create returns a builder for creating a VerifySession entity.
-func (c *VerifySessionClient) Create() *VerifySessionCreate {
-	mutation := newVerifySessionMutation(c.config, OpCreate)
-	return &VerifySessionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of VerifySession entities.
-func (c *VerifySessionClient) CreateBulk(builders ...*VerifySessionCreate) *VerifySessionCreateBulk {
-	return &VerifySessionCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for VerifySession.
-func (c *VerifySessionClient) Update() *VerifySessionUpdate {
-	mutation := newVerifySessionMutation(c.config, OpUpdate)
-	return &VerifySessionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *VerifySessionClient) UpdateOne(vs *VerifySession) *VerifySessionUpdateOne {
-	mutation := newVerifySessionMutation(c.config, OpUpdateOne, withVerifySession(vs))
-	return &VerifySessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *VerifySessionClient) UpdateOneID(id int) *VerifySessionUpdateOne {
-	mutation := newVerifySessionMutation(c.config, OpUpdateOne, withVerifySessionID(id))
-	return &VerifySessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for VerifySession.
-func (c *VerifySessionClient) Delete() *VerifySessionDelete {
-	mutation := newVerifySessionMutation(c.config, OpDelete)
-	return &VerifySessionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *VerifySessionClient) DeleteOne(vs *VerifySession) *VerifySessionDeleteOne {
-	return c.DeleteOneID(vs.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *VerifySessionClient) DeleteOneID(id int) *VerifySessionDeleteOne {
-	builder := c.Delete().Where(verifysession.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &VerifySessionDeleteOne{builder}
-}
-
-// Query returns a query builder for VerifySession.
-func (c *VerifySessionClient) Query() *VerifySessionQuery {
-	return &VerifySessionQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypeVerifySession},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a VerifySession entity by its id.
-func (c *VerifySessionClient) Get(ctx context.Context, id int) (*VerifySession, error) {
-	return c.Query().Where(verifysession.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *VerifySessionClient) GetX(ctx context.Context, id int) *VerifySession {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// Hooks returns the client hooks.
-func (c *VerifySessionClient) Hooks() []Hook {
-	return c.hooks.VerifySession
-}
-
-// Interceptors returns the client interceptors.
-func (c *VerifySessionClient) Interceptors() []Interceptor {
-	return c.inters.VerifySession
-}
-
-func (c *VerifySessionClient) mutate(ctx context.Context, m *VerifySessionMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&VerifySessionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&VerifySessionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&VerifySessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&VerifySessionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown VerifySession mutation op: %q", m.Op())
-	}
-}
-
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Plugin, User, VerifySession []ent.Hook
+		Plugin, Source, User []ent.Hook
 	}
 	inters struct {
-		Plugin, User, VerifySession []ent.Interceptor
+		Plugin, Source, User []ent.Interceptor
 	}
 )

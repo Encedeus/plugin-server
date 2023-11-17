@@ -3,14 +3,15 @@
 package ent
 
 import (
-	"PluginServer/ent/plugin"
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/Encedeus/pluginServer/ent/plugin"
+	"github.com/Encedeus/pluginServer/ent/source"
+	"github.com/Encedeus/pluginServer/ent/user"
 	"github.com/google/uuid"
 )
 
@@ -21,79 +22,9 @@ type PluginCreate struct {
 	hooks    []Hook
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (pc *PluginCreate) SetCreatedAt(t time.Time) *PluginCreate {
-	pc.mutation.SetCreatedAt(t)
-	return pc
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (pc *PluginCreate) SetNillableCreatedAt(t *time.Time) *PluginCreate {
-	if t != nil {
-		pc.SetCreatedAt(*t)
-	}
-	return pc
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (pc *PluginCreate) SetUpdatedAt(t time.Time) *PluginCreate {
-	pc.mutation.SetUpdatedAt(t)
-	return pc
-}
-
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (pc *PluginCreate) SetNillableUpdatedAt(t *time.Time) *PluginCreate {
-	if t != nil {
-		pc.SetUpdatedAt(*t)
-	}
-	return pc
-}
-
 // SetName sets the "name" field.
 func (pc *PluginCreate) SetName(s string) *PluginCreate {
 	pc.mutation.SetName(s)
-	return pc
-}
-
-// SetDescription sets the "description" field.
-func (pc *PluginCreate) SetDescription(s string) *PluginCreate {
-	pc.mutation.SetDescription(s)
-	return pc
-}
-
-// SetNillableDescription sets the "description" field if the given value is not nil.
-func (pc *PluginCreate) SetNillableDescription(s *string) *PluginCreate {
-	if s != nil {
-		pc.SetDescription(*s)
-	}
-	return pc
-}
-
-// SetRepo sets the "repo" field.
-func (pc *PluginCreate) SetRepo(s string) *PluginCreate {
-	pc.mutation.SetRepo(s)
-	return pc
-}
-
-// SetNillableRepo sets the "repo" field if the given value is not nil.
-func (pc *PluginCreate) SetNillableRepo(s *string) *PluginCreate {
-	if s != nil {
-		pc.SetRepo(*s)
-	}
-	return pc
-}
-
-// SetHomepage sets the "homepage" field.
-func (pc *PluginCreate) SetHomepage(s string) *PluginCreate {
-	pc.mutation.SetHomepage(s)
-	return pc
-}
-
-// SetNillableHomepage sets the "homepage" field if the given value is not nil.
-func (pc *PluginCreate) SetNillableHomepage(s *string) *PluginCreate {
-	if s != nil {
-		pc.SetHomepage(*s)
-	}
 	return pc
 }
 
@@ -103,10 +34,34 @@ func (pc *PluginCreate) SetOwnerID(u uuid.UUID) *PluginCreate {
 	return pc
 }
 
-// SetContributors sets the "contributors" field.
-func (pc *PluginCreate) SetContributors(s []string) *PluginCreate {
-	pc.mutation.SetContributors(s)
+// SetSourceID sets the "source_id" field.
+func (pc *PluginCreate) SetSourceID(i int) *PluginCreate {
+	pc.mutation.SetSourceID(i)
 	return pc
+}
+
+// SetID sets the "id" field.
+func (pc *PluginCreate) SetID(u uuid.UUID) *PluginCreate {
+	pc.mutation.SetID(u)
+	return pc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (pc *PluginCreate) SetNillableID(u *uuid.UUID) *PluginCreate {
+	if u != nil {
+		pc.SetID(*u)
+	}
+	return pc
+}
+
+// SetOwner sets the "owner" edge to the User entity.
+func (pc *PluginCreate) SetOwner(u *User) *PluginCreate {
+	return pc.SetOwnerID(u.ID)
+}
+
+// SetSource sets the "source" edge to the Source entity.
+func (pc *PluginCreate) SetSource(s *Source) *PluginCreate {
+	return pc.SetSourceID(s.ID)
 }
 
 // Mutation returns the PluginMutation object of the builder.
@@ -144,42 +99,28 @@ func (pc *PluginCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (pc *PluginCreate) defaults() {
-	if _, ok := pc.mutation.CreatedAt(); !ok {
-		v := plugin.DefaultCreatedAt()
-		pc.mutation.SetCreatedAt(v)
-	}
-	if _, ok := pc.mutation.UpdatedAt(); !ok {
-		v := plugin.DefaultUpdatedAt()
-		pc.mutation.SetUpdatedAt(v)
+	if _, ok := pc.mutation.ID(); !ok {
+		v := plugin.DefaultID()
+		pc.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (pc *PluginCreate) check() error {
-	if _, ok := pc.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Plugin.created_at"`)}
-	}
-	if _, ok := pc.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Plugin.updated_at"`)}
-	}
 	if _, ok := pc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Plugin.name"`)}
-	}
-	if v, ok := pc.mutation.Name(); ok {
-		if err := plugin.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Plugin.name": %w`, err)}
-		}
-	}
-	if v, ok := pc.mutation.Description(); ok {
-		if err := plugin.DescriptionValidator(v); err != nil {
-			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Plugin.description": %w`, err)}
-		}
 	}
 	if _, ok := pc.mutation.OwnerID(); !ok {
 		return &ValidationError{Name: "owner_id", err: errors.New(`ent: missing required field "Plugin.owner_id"`)}
 	}
-	if _, ok := pc.mutation.Contributors(); !ok {
-		return &ValidationError{Name: "contributors", err: errors.New(`ent: missing required field "Plugin.contributors"`)}
+	if _, ok := pc.mutation.SourceID(); !ok {
+		return &ValidationError{Name: "source_id", err: errors.New(`ent: missing required field "Plugin.source_id"`)}
+	}
+	if _, ok := pc.mutation.OwnerID(); !ok {
+		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Plugin.owner"`)}
+	}
+	if _, ok := pc.mutation.SourceID(); !ok {
+		return &ValidationError{Name: "source", err: errors.New(`ent: missing required edge "Plugin.source"`)}
 	}
 	return nil
 }
@@ -195,8 +136,13 @@ func (pc *PluginCreate) sqlSave(ctx context.Context) (*Plugin, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*uuid.UUID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	pc.mutation.id = &_node.ID
 	pc.mutation.done = true
 	return _node, nil
@@ -205,39 +151,49 @@ func (pc *PluginCreate) sqlSave(ctx context.Context) (*Plugin, error) {
 func (pc *PluginCreate) createSpec() (*Plugin, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Plugin{config: pc.config}
-		_spec = sqlgraph.NewCreateSpec(plugin.Table, sqlgraph.NewFieldSpec(plugin.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(plugin.Table, sqlgraph.NewFieldSpec(plugin.FieldID, field.TypeUUID))
 	)
-	if value, ok := pc.mutation.CreatedAt(); ok {
-		_spec.SetField(plugin.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
-	}
-	if value, ok := pc.mutation.UpdatedAt(); ok {
-		_spec.SetField(plugin.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
+	if id, ok := pc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
 	}
 	if value, ok := pc.mutation.Name(); ok {
 		_spec.SetField(plugin.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
-	if value, ok := pc.mutation.Description(); ok {
-		_spec.SetField(plugin.FieldDescription, field.TypeString, value)
-		_node.Description = value
+	if nodes := pc.mutation.OwnerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   plugin.OwnerTable,
+			Columns: []string{plugin.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.OwnerID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if value, ok := pc.mutation.Repo(); ok {
-		_spec.SetField(plugin.FieldRepo, field.TypeString, value)
-		_node.Repo = value
-	}
-	if value, ok := pc.mutation.Homepage(); ok {
-		_spec.SetField(plugin.FieldHomepage, field.TypeString, value)
-		_node.Homepage = value
-	}
-	if value, ok := pc.mutation.OwnerID(); ok {
-		_spec.SetField(plugin.FieldOwnerID, field.TypeUUID, value)
-		_node.OwnerID = value
-	}
-	if value, ok := pc.mutation.Contributors(); ok {
-		_spec.SetField(plugin.FieldContributors, field.TypeJSON, value)
-		_node.Contributors = value
+	if nodes := pc.mutation.SourceIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   plugin.SourceTable,
+			Columns: []string{plugin.SourceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(source.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.SourceID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }
@@ -245,11 +201,15 @@ func (pc *PluginCreate) createSpec() (*Plugin, *sqlgraph.CreateSpec) {
 // PluginCreateBulk is the builder for creating many Plugin entities in bulk.
 type PluginCreateBulk struct {
 	config
+	err      error
 	builders []*PluginCreate
 }
 
 // Save creates the Plugin entities in the database.
 func (pcb *PluginCreateBulk) Save(ctx context.Context) ([]*Plugin, error) {
+	if pcb.err != nil {
+		return nil, pcb.err
+	}
 	specs := make([]*sqlgraph.CreateSpec, len(pcb.builders))
 	nodes := make([]*Plugin, len(pcb.builders))
 	mutators := make([]Mutator, len(pcb.builders))
@@ -283,10 +243,6 @@ func (pcb *PluginCreateBulk) Save(ctx context.Context) ([]*Plugin, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

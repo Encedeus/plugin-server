@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"PluginServer/util"
+	"github.com/Encedeus/pluginServer/services"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
@@ -17,8 +17,8 @@ func RefreshJWTAuth(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		// extract and validate JWT
-		token := util.GetTokenFromHeader(c)
-		isValid, refreshToken, err := util.ValidateRefreshJWT(token)
+		token := services.GetTokenFromHeader(c)
+		isValid, refreshToken, err := services.ValidateRefreshJWT(token)
 
 		if !isValid || err != nil {
 			return c.JSON(http.StatusUnauthorized, echo.Map{
@@ -27,7 +27,6 @@ func RefreshJWTAuth(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		c.Request().Header.Set("UUID", refreshToken.UserId.String())
-
 		return next(c)
 	}
 }

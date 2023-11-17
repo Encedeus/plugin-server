@@ -5,7 +5,7 @@ server {
 
 database {
   host = "localhost"
-  port = 54322
+  port = 5678
   user = "postgres"
   name = "PluginServerDB"
   password = "root"
@@ -19,8 +19,22 @@ auth {
 smtp {
   host = "smtp.gmail.com"
   port = 587
+  name = "noreply.encedeus@gmail.com"
+  password = "fxzvqjqtxgfjmceh"
 }
 
-cdn {
+storage {
   dir = "./pfp"
 }
+
+validation {
+  max_email_len = 32
+  max_name_len = 32
+  min_name_len = 3
+  max_pass_len = 64
+  min_pass_len = 8
+
+  max_plugin_name_len = 32
+  min_plugin_name_len = 2
+}
+

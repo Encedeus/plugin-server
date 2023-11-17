@@ -14,10 +14,10 @@ type Tx struct {
 	config
 	// Plugin is the client for interacting with the Plugin builders.
 	Plugin *PluginClient
+	// Source is the client for interacting with the Source builders.
+	Source *SourceClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
-	// VerifySession is the client for interacting with the VerifySession builders.
-	VerifySession *VerifySessionClient
 
 	// lazily loaded.
 	client     *Client
@@ -150,8 +150,8 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Plugin = NewPluginClient(tx.config)
+	tx.Source = NewSourceClient(tx.config)
 	tx.User = NewUserClient(tx.config)
-	tx.VerifySession = NewVerifySessionClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

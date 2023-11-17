@@ -3,13 +3,13 @@
 package ent
 
 import (
-	"PluginServer/ent/plugin"
-	"PluginServer/ent/predicate"
 	"context"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/Encedeus/pluginServer/ent/plugin"
+	"github.com/Encedeus/pluginServer/ent/predicate"
 )
 
 // PluginDelete is the builder for deleting a Plugin entity.
@@ -40,7 +40,7 @@ func (pd *PluginDelete) ExecX(ctx context.Context) int {
 }
 
 func (pd *PluginDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := sqlgraph.NewDeleteSpec(plugin.Table, sqlgraph.NewFieldSpec(plugin.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewDeleteSpec(plugin.Table, sqlgraph.NewFieldSpec(plugin.FieldID, field.TypeUUID))
 	if ps := pd.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {

@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+option go_package = "./go;protoapi";
+
+message PluginCreateRequest {
+   string name = 1;
+   string githubRepo = 2;
+}

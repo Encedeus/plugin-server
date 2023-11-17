@@ -3,9 +3,10 @@
 package hook
 
 import (
-	"PluginServer/ent"
 	"context"
 	"fmt"
+
+	"github.com/Encedeus/pluginServer/ent"
 )
 
 // The PluginFunc type is an adapter to allow the use of ordinary
@@ -20,6 +21,18 @@ func (f PluginFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PluginMutation", m)
 }
 
+// The SourceFunc type is an adapter to allow the use of ordinary
+// function as Source mutator.
+type SourceFunc func(context.Context, *ent.SourceMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SourceFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SourceMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SourceMutation", m)
+}
+
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)
@@ -30,18 +43,6 @@ func (f UserFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error)
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserMutation", m)
-}
-
-// The VerifySessionFunc type is an adapter to allow the use of ordinary
-// function as VerifySession mutator.
-type VerifySessionFunc func(context.Context, *ent.VerifySessionMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f VerifySessionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.VerifySessionMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.VerifySessionMutation", m)
 }
 
 // Condition is a hook condition function.

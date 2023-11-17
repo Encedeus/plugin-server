@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option go_package = "./go;protoapi";
+
+message UserRegisterRequest {
+  // required
+  string name = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message UserSignInRequest {
+  string uid = 1;
+  string password = 2;
+}
+
+message UserAuthorizeResponse {
+  string accessToken = 1;
+}

@@ -3,8 +3,6 @@
 package ent
 
 import (
-	"PluginServer/ent/predicate"
-	"PluginServer/ent/user"
 	"context"
 	"errors"
 	"fmt"
@@ -13,6 +11,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/Encedeus/pluginServer/ent/plugin"
+	"github.com/Encedeus/pluginServer/ent/predicate"
+	"github.com/Encedeus/pluginServer/ent/user"
+	"github.com/google/uuid"
 )
 
 // UserUpdate is the builder for updating User entities.
@@ -28,9 +30,37 @@ func (uu *UserUpdate) Where(ps ...predicate.User) *UserUpdate {
 	return uu
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (uu *UserUpdate) SetCreatedAt(t time.Time) *UserUpdate {
+	uu.mutation.SetCreatedAt(t)
+	return uu
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableCreatedAt(t *time.Time) *UserUpdate {
+	if t != nil {
+		uu.SetCreatedAt(*t)
+	}
+	return uu
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (uu *UserUpdate) SetUpdatedAt(t time.Time) *UserUpdate {
 	uu.mutation.SetUpdatedAt(t)
+	return uu
+}
+
+// SetAuthUpdatedAt sets the "auth_updated_at" field.
+func (uu *UserUpdate) SetAuthUpdatedAt(t time.Time) *UserUpdate {
+	uu.mutation.SetAuthUpdatedAt(t)
+	return uu
+}
+
+// SetNillableAuthUpdatedAt sets the "auth_updated_at" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableAuthUpdatedAt(t *time.Time) *UserUpdate {
+	if t != nil {
+		uu.SetAuthUpdatedAt(*t)
+	}
 	return uu
 }
 
@@ -54,35 +84,9 @@ func (uu *UserUpdate) ClearDeletedAt() *UserUpdate {
 	return uu
 }
 
-// SetAuthUpdatedAt sets the "auth_updated_at" field.
-func (uu *UserUpdate) SetAuthUpdatedAt(t time.Time) *UserUpdate {
-	uu.mutation.SetAuthUpdatedAt(t)
-	return uu
-}
-
-// SetNillableAuthUpdatedAt sets the "auth_updated_at" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableAuthUpdatedAt(t *time.Time) *UserUpdate {
-	if t != nil {
-		uu.SetAuthUpdatedAt(*t)
-	}
-	return uu
-}
-
-// ClearAuthUpdatedAt clears the value of the "auth_updated_at" field.
-func (uu *UserUpdate) ClearAuthUpdatedAt() *UserUpdate {
-	uu.mutation.ClearAuthUpdatedAt()
-	return uu
-}
-
 // SetEmail sets the "email" field.
 func (uu *UserUpdate) SetEmail(s string) *UserUpdate {
 	uu.mutation.SetEmail(s)
-	return uu
-}
-
-// SetName sets the "name" field.
-func (uu *UserUpdate) SetName(s string) *UserUpdate {
-	uu.mutation.SetName(s)
 	return uu
 }
 
@@ -92,18 +96,39 @@ func (uu *UserUpdate) SetPassword(s string) *UserUpdate {
 	return uu
 }
 
-// SetVerified sets the "verified" field.
-func (uu *UserUpdate) SetVerified(b bool) *UserUpdate {
-	uu.mutation.SetVerified(b)
+// SetName sets the "name" field.
+func (uu *UserUpdate) SetName(s string) *UserUpdate {
+	uu.mutation.SetName(s)
 	return uu
 }
 
-// SetNillableVerified sets the "verified" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableVerified(b *bool) *UserUpdate {
+// SetEmailVerified sets the "email_verified" field.
+func (uu *UserUpdate) SetEmailVerified(b bool) *UserUpdate {
+	uu.mutation.SetEmailVerified(b)
+	return uu
+}
+
+// SetNillableEmailVerified sets the "email_verified" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableEmailVerified(b *bool) *UserUpdate {
 	if b != nil {
-		uu.SetVerified(*b)
+		uu.SetEmailVerified(*b)
 	}
 	return uu
+}
+
+// AddPluginIDs adds the "plugin" edge to the Plugin entity by IDs.
+func (uu *UserUpdate) AddPluginIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.AddPluginIDs(ids...)
+	return uu
+}
+
+// AddPlugin adds the "plugin" edges to the Plugin entity.
+func (uu *UserUpdate) AddPlugin(p ...*Plugin) *UserUpdate {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uu.AddPluginIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -111,9 +136,32 @@ func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
 }
 
+// ClearPlugin clears all "plugin" edges to the Plugin entity.
+func (uu *UserUpdate) ClearPlugin() *UserUpdate {
+	uu.mutation.ClearPlugin()
+	return uu
+}
+
+// RemovePluginIDs removes the "plugin" edge to Plugin entities by IDs.
+func (uu *UserUpdate) RemovePluginIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.RemovePluginIDs(ids...)
+	return uu
+}
+
+// RemovePlugin removes "plugin" edges to Plugin entities.
+func (uu *UserUpdate) RemovePlugin(p ...*Plugin) *UserUpdate {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uu.RemovePluginIDs(ids...)
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (uu *UserUpdate) Save(ctx context.Context) (int, error) {
-	uu.defaults()
+	if err := uu.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks(ctx, uu.sqlSave, uu.mutation, uu.hooks)
 }
 
@@ -140,11 +188,15 @@ func (uu *UserUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (uu *UserUpdate) defaults() {
+func (uu *UserUpdate) defaults() error {
 	if _, ok := uu.mutation.UpdatedAt(); !ok {
+		if user.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized user.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := user.UpdateDefaultUpdatedAt()
 		uu.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -166,7 +218,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := uu.check(); err != nil {
 		return n, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID))
 	if ps := uu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -174,8 +226,14 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
+	if value, ok := uu.mutation.CreatedAt(); ok {
+		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
+	}
 	if value, ok := uu.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := uu.mutation.AuthUpdatedAt(); ok {
+		_spec.SetField(user.FieldAuthUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := uu.mutation.DeletedAt(); ok {
 		_spec.SetField(user.FieldDeletedAt, field.TypeTime, value)
@@ -183,23 +241,62 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if uu.mutation.DeletedAtCleared() {
 		_spec.ClearField(user.FieldDeletedAt, field.TypeTime)
 	}
-	if value, ok := uu.mutation.AuthUpdatedAt(); ok {
-		_spec.SetField(user.FieldAuthUpdatedAt, field.TypeTime, value)
-	}
-	if uu.mutation.AuthUpdatedAtCleared() {
-		_spec.ClearField(user.FieldAuthUpdatedAt, field.TypeTime)
-	}
 	if value, ok := uu.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
-	}
-	if value, ok := uu.mutation.Name(); ok {
-		_spec.SetField(user.FieldName, field.TypeString, value)
 	}
 	if value, ok := uu.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
 	}
-	if value, ok := uu.mutation.Verified(); ok {
-		_spec.SetField(user.FieldVerified, field.TypeBool, value)
+	if value, ok := uu.mutation.Name(); ok {
+		_spec.SetField(user.FieldName, field.TypeString, value)
+	}
+	if value, ok := uu.mutation.EmailVerified(); ok {
+		_spec.SetField(user.FieldEmailVerified, field.TypeBool, value)
+	}
+	if uu.mutation.PluginCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.PluginTable,
+			Columns: []string{user.PluginColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(plugin.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedPluginIDs(); len(nodes) > 0 && !uu.mutation.PluginCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.PluginTable,
+			Columns: []string{user.PluginColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(plugin.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.PluginIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.PluginTable,
+			Columns: []string{user.PluginColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(plugin.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -221,9 +318,37 @@ type UserUpdateOne struct {
 	mutation *UserMutation
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (uuo *UserUpdateOne) SetCreatedAt(t time.Time) *UserUpdateOne {
+	uuo.mutation.SetCreatedAt(t)
+	return uuo
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableCreatedAt(t *time.Time) *UserUpdateOne {
+	if t != nil {
+		uuo.SetCreatedAt(*t)
+	}
+	return uuo
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (uuo *UserUpdateOne) SetUpdatedAt(t time.Time) *UserUpdateOne {
 	uuo.mutation.SetUpdatedAt(t)
+	return uuo
+}
+
+// SetAuthUpdatedAt sets the "auth_updated_at" field.
+func (uuo *UserUpdateOne) SetAuthUpdatedAt(t time.Time) *UserUpdateOne {
+	uuo.mutation.SetAuthUpdatedAt(t)
+	return uuo
+}
+
+// SetNillableAuthUpdatedAt sets the "auth_updated_at" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableAuthUpdatedAt(t *time.Time) *UserUpdateOne {
+	if t != nil {
+		uuo.SetAuthUpdatedAt(*t)
+	}
 	return uuo
 }
 
@@ -247,35 +372,9 @@ func (uuo *UserUpdateOne) ClearDeletedAt() *UserUpdateOne {
 	return uuo
 }
 
-// SetAuthUpdatedAt sets the "auth_updated_at" field.
-func (uuo *UserUpdateOne) SetAuthUpdatedAt(t time.Time) *UserUpdateOne {
-	uuo.mutation.SetAuthUpdatedAt(t)
-	return uuo
-}
-
-// SetNillableAuthUpdatedAt sets the "auth_updated_at" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableAuthUpdatedAt(t *time.Time) *UserUpdateOne {
-	if t != nil {
-		uuo.SetAuthUpdatedAt(*t)
-	}
-	return uuo
-}
-
-// ClearAuthUpdatedAt clears the value of the "auth_updated_at" field.
-func (uuo *UserUpdateOne) ClearAuthUpdatedAt() *UserUpdateOne {
-	uuo.mutation.ClearAuthUpdatedAt()
-	return uuo
-}
-
 // SetEmail sets the "email" field.
 func (uuo *UserUpdateOne) SetEmail(s string) *UserUpdateOne {
 	uuo.mutation.SetEmail(s)
-	return uuo
-}
-
-// SetName sets the "name" field.
-func (uuo *UserUpdateOne) SetName(s string) *UserUpdateOne {
-	uuo.mutation.SetName(s)
 	return uuo
 }
 
@@ -285,23 +384,65 @@ func (uuo *UserUpdateOne) SetPassword(s string) *UserUpdateOne {
 	return uuo
 }
 
-// SetVerified sets the "verified" field.
-func (uuo *UserUpdateOne) SetVerified(b bool) *UserUpdateOne {
-	uuo.mutation.SetVerified(b)
+// SetName sets the "name" field.
+func (uuo *UserUpdateOne) SetName(s string) *UserUpdateOne {
+	uuo.mutation.SetName(s)
 	return uuo
 }
 
-// SetNillableVerified sets the "verified" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableVerified(b *bool) *UserUpdateOne {
+// SetEmailVerified sets the "email_verified" field.
+func (uuo *UserUpdateOne) SetEmailVerified(b bool) *UserUpdateOne {
+	uuo.mutation.SetEmailVerified(b)
+	return uuo
+}
+
+// SetNillableEmailVerified sets the "email_verified" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableEmailVerified(b *bool) *UserUpdateOne {
 	if b != nil {
-		uuo.SetVerified(*b)
+		uuo.SetEmailVerified(*b)
 	}
 	return uuo
+}
+
+// AddPluginIDs adds the "plugin" edge to the Plugin entity by IDs.
+func (uuo *UserUpdateOne) AddPluginIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.AddPluginIDs(ids...)
+	return uuo
+}
+
+// AddPlugin adds the "plugin" edges to the Plugin entity.
+func (uuo *UserUpdateOne) AddPlugin(p ...*Plugin) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uuo.AddPluginIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
+}
+
+// ClearPlugin clears all "plugin" edges to the Plugin entity.
+func (uuo *UserUpdateOne) ClearPlugin() *UserUpdateOne {
+	uuo.mutation.ClearPlugin()
+	return uuo
+}
+
+// RemovePluginIDs removes the "plugin" edge to Plugin entities by IDs.
+func (uuo *UserUpdateOne) RemovePluginIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.RemovePluginIDs(ids...)
+	return uuo
+}
+
+// RemovePlugin removes "plugin" edges to Plugin entities.
+func (uuo *UserUpdateOne) RemovePlugin(p ...*Plugin) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uuo.RemovePluginIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -319,7 +460,9 @@ func (uuo *UserUpdateOne) Select(field string, fields ...string) *UserUpdateOne 
 
 // Save executes the query and returns the updated User entity.
 func (uuo *UserUpdateOne) Save(ctx context.Context) (*User, error) {
-	uuo.defaults()
+	if err := uuo.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, uuo.sqlSave, uuo.mutation, uuo.hooks)
 }
 
@@ -346,11 +489,15 @@ func (uuo *UserUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (uuo *UserUpdateOne) defaults() {
+func (uuo *UserUpdateOne) defaults() error {
 	if _, ok := uuo.mutation.UpdatedAt(); !ok {
+		if user.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized user.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := user.UpdateDefaultUpdatedAt()
 		uuo.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -372,7 +519,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if err := uuo.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID))
 	id, ok := uuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "User.id" for update`)}
@@ -397,8 +544,14 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			}
 		}
 	}
+	if value, ok := uuo.mutation.CreatedAt(); ok {
+		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
+	}
 	if value, ok := uuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := uuo.mutation.AuthUpdatedAt(); ok {
+		_spec.SetField(user.FieldAuthUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := uuo.mutation.DeletedAt(); ok {
 		_spec.SetField(user.FieldDeletedAt, field.TypeTime, value)
@@ -406,23 +559,62 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if uuo.mutation.DeletedAtCleared() {
 		_spec.ClearField(user.FieldDeletedAt, field.TypeTime)
 	}
-	if value, ok := uuo.mutation.AuthUpdatedAt(); ok {
-		_spec.SetField(user.FieldAuthUpdatedAt, field.TypeTime, value)
-	}
-	if uuo.mutation.AuthUpdatedAtCleared() {
-		_spec.ClearField(user.FieldAuthUpdatedAt, field.TypeTime)
-	}
 	if value, ok := uuo.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
-	}
-	if value, ok := uuo.mutation.Name(); ok {
-		_spec.SetField(user.FieldName, field.TypeString, value)
 	}
 	if value, ok := uuo.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
 	}
-	if value, ok := uuo.mutation.Verified(); ok {
-		_spec.SetField(user.FieldVerified, field.TypeBool, value)
+	if value, ok := uuo.mutation.Name(); ok {
+		_spec.SetField(user.FieldName, field.TypeString, value)
+	}
+	if value, ok := uuo.mutation.EmailVerified(); ok {
+		_spec.SetField(user.FieldEmailVerified, field.TypeBool, value)
+	}
+	if uuo.mutation.PluginCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.PluginTable,
+			Columns: []string{user.PluginColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(plugin.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedPluginIDs(); len(nodes) > 0 && !uuo.mutation.PluginCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.PluginTable,
+			Columns: []string{user.PluginColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(plugin.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.PluginIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.PluginTable,
+			Columns: []string{user.PluginColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(plugin.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &User{config: uuo.config}
 	_spec.Assign = _node.assignValues

@@ -8,7 +8,7 @@ services:
       - POSTGRES_PASSWORD=root # will not be used in prod
       - POSTGRES_DB=PluginServerDB
     ports:
-      - "54322:5432"
+      - "5678:5432"
 #    volumes:
 #      - postgres-data:/var/lib/postgresql/data/
 
