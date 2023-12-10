@@ -11,4 +11,8 @@ message HttpResponse {
   string message = 2;
 }
 
+message GithubRepo {
+  string username = 1;
+  string repoName = 2;
+}
 

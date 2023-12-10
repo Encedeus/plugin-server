@@ -19,9 +19,16 @@ import (
 
 func CreateUser(ctx context.Context, db *ent.Client, req *protoapi.UserRegisterRequest) (*ent.User, error) {
 	err := validate.IsUsername(req.Name)
-	err = validate.IsEmail(req.Email)
-	err = validate.IsPassword(req.Password)
+	if err != nil {
+		return nil, err
+	}
 
+	err = validate.IsEmail(req.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	err = validate.IsPassword(req.Password)
 	if err != nil {
 		return nil, err
 	}

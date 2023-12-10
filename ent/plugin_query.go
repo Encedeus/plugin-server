@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -12,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/Encedeus/pluginServer/ent/plugin"
 	"github.com/Encedeus/pluginServer/ent/predicate"
+	"github.com/Encedeus/pluginServer/ent/publication"
 	"github.com/Encedeus/pluginServer/ent/source"
 	"github.com/Encedeus/pluginServer/ent/user"
 	"github.com/google/uuid"
@@ -20,12 +22,13 @@ import (
 // PluginQuery is the builder for querying Plugin entities.
 type PluginQuery struct {
 	config
-	ctx        *QueryContext
-	order      []plugin.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Plugin
-	withOwner  *UserQuery
-	withSource *SourceQuery
+	ctx              *QueryContext
+	order            []plugin.OrderOption
+	inters           []Interceptor
+	predicates       []predicate.Plugin
+	withOwner        *UserQuery
+	withSource       *SourceQuery
+	withPublications *PublicationQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -99,6 +102,28 @@ func (pq *PluginQuery) QuerySource() *SourceQuery {
 			sqlgraph.From(plugin.Table, plugin.FieldID, selector),
 			sqlgraph.To(source.Table, source.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, plugin.SourceTable, plugin.SourceColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryPublications chains the current query on the "publications" edge.
+func (pq *PluginQuery) QueryPublications() *PublicationQuery {
+	query := (&PublicationClient{config: pq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := pq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := pq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(plugin.Table, plugin.FieldID, selector),
+			sqlgraph.To(publication.Table, publication.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, plugin.PublicationsTable, plugin.PublicationsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
 		return fromU, nil
@@ -293,13 +318,14 @@ func (pq *PluginQuery) Clone() *PluginQuery {
 		return nil
 	}
 	return &PluginQuery{
-		config:     pq.config,
-		ctx:        pq.ctx.Clone(),
-		order:      append([]plugin.OrderOption{}, pq.order...),
-		inters:     append([]Interceptor{}, pq.inters...),
-		predicates: append([]predicate.Plugin{}, pq.predicates...),
-		withOwner:  pq.withOwner.Clone(),
-		withSource: pq.withSource.Clone(),
+		config:           pq.config,
+		ctx:              pq.ctx.Clone(),
+		order:            append([]plugin.OrderOption{}, pq.order...),
+		inters:           append([]Interceptor{}, pq.inters...),
+		predicates:       append([]predicate.Plugin{}, pq.predicates...),
+		withOwner:        pq.withOwner.Clone(),
+		withSource:       pq.withSource.Clone(),
+		withPublications: pq.withPublications.Clone(),
 		// clone intermediate query.
 		sql:  pq.sql.Clone(),
 		path: pq.path,
@@ -325,6 +351,17 @@ func (pq *PluginQuery) WithSource(opts ...func(*SourceQuery)) *PluginQuery {
 		opt(query)
 	}
 	pq.withSource = query
+	return pq
+}
+
+// WithPublications tells the query-builder to eager-load the nodes that are connected to
+// the "publications" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *PluginQuery) WithPublications(opts ...func(*PublicationQuery)) *PluginQuery {
+	query := (&PublicationClient{config: pq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	pq.withPublications = query
 	return pq
 }
 
@@ -406,9 +443,10 @@ func (pq *PluginQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Plugi
 	var (
 		nodes       = []*Plugin{}
 		_spec       = pq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			pq.withOwner != nil,
 			pq.withSource != nil,
+			pq.withPublications != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -438,6 +476,13 @@ func (pq *PluginQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Plugi
 	if query := pq.withSource; query != nil {
 		if err := pq.loadSource(ctx, query, nodes, nil,
 			func(n *Plugin, e *Source) { n.Edges.Source = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := pq.withPublications; query != nil {
+		if err := pq.loadPublications(ctx, query, nodes,
+			func(n *Plugin) { n.Edges.Publications = []*Publication{} },
+			func(n *Plugin, e *Publication) { n.Edges.Publications = append(n.Edges.Publications, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -499,6 +544,36 @@ func (pq *PluginQuery) loadSource(ctx context.Context, query *SourceQuery, nodes
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (pq *PluginQuery) loadPublications(ctx context.Context, query *PublicationQuery, nodes []*Plugin, init func(*Plugin), assign func(*Plugin, *Publication)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Plugin)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(publication.FieldPluginID)
+	}
+	query.Where(predicate.Publication(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(plugin.PublicationsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.PluginID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "plugin_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }

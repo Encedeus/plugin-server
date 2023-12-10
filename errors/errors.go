@@ -42,6 +42,13 @@ var (
 	ErrNotModified                = NewHttpError("", 304)
 	ErrInvalidGithubURL           = NewValidationError("invalid github URL")
 	ErrGithubRepoDoesNotExist     = NewValidationError("Non existent GitHub repo")
+	ErrPluginNotFound             = NewHttpError("plugin not found", http.StatusNotFound)
+	ErrInvalidPluginName          = NewValidationError("invalid plugin name")
+	ErrReleaseTagDoesNotExist     = NewHttpError("release tag not found in plugin's source repository", http.StatusNotFound)
+	ReleaseUsernameTooLong        = NewValidationError("release name too long")
+	ReleaseUsernameTooShort       = NewValidationError("release name too short")
+	ErrMissingPluginFile          = NewValidationError("the plugin file is missing in the selected release")
+	GithubAPIError                = NewInternalError("github api failed")
 )
 
 func GetHTTPErrorResponse(c echo.Context, err error) error {

@@ -9,6 +9,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"net/http"
+	"strings"
 )
 
 func ProtoUUIDToUUID(id *protoapi.UUID) uuid.UUID {
@@ -32,6 +33,37 @@ func EntUserEntityToProtoUser(user *ent.User) *protoapi.User {
 	}
 }
 
+func EntPublicationEntityToProtoRelease(publication *ent.Publication) *protoapi.Release {
+	return &protoapi.Release{
+		Name:         publication.Name,
+		PublishedAt:  timestamppb.New(publication.CreatedAt),
+		IsDeprecated: publication.IsDeprecated,
+		DownloadURI:  publication.URIToFile,
+	}
+}
+
+func EntPublicationsEntityToProtoReleases(publications []*ent.Publication) []*protoapi.Release {
+	var releases []*protoapi.Release
+
+	for _, publication := range publications {
+		releases = append(releases, EntPublicationEntityToProtoRelease(publication))
+	}
+
+	return releases
+}
+
+func EntPluginEntityToProtoPlugin(plugin *ent.Plugin) *protoapi.Plugin {
+	return &protoapi.Plugin{
+		Id:        plugin.ID.String(),
+		Name:      plugin.Name,
+		OwnerName: plugin.Edges.Owner.Name,
+		Source: &protoapi.Source{
+			RepoUri: "https://github.com/" + plugin.Edges.Source.Repository,
+		},
+		Releases: EntPublicationsEntityToProtoReleases(plugin.Edges.Publications),
+	}
+}
+
 func ProtoUserToEntUserEntity(user *protoapi.User) *ent.User {
 	userId, _ := uuid.Parse(user.Id)
 	return &ent.User{
@@ -43,6 +75,21 @@ func ProtoUserToEntUserEntity(user *protoapi.User) *ent.User {
 		Email:     user.Email,
 		Password:  user.Password,
 	}
+}
+
+func GithubUriToProtoGithubRepo(repoURL string) *protoapi.GithubRepo {
+
+	repoURL = strings.ReplaceAll(repoURL, "www.", "")
+	repoPath := strings.ReplaceAll(repoURL, "https://github.com/", "")
+	repoPathSegments := strings.Split(repoPath, "/")
+
+	return &protoapi.GithubRepo{Username: repoPathSegments[0], RepoName: repoPathSegments[1]}
+}
+
+func SimpleGithubUriToProtoGithubRepo(repoURL string) *protoapi.GithubRepo {
+	repoPathSegments := strings.Split(repoURL, "/")
+
+	return &protoapi.GithubRepo{Username: repoPathSegments[0], RepoName: repoPathSegments[1]}
 }
 
 func MarshalControllerProtoResponseToJSON(c *echo.Context, okStatus int, message proto.Message) (err error) {

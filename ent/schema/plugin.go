@@ -32,5 +32,6 @@ func (Plugin) Edges() []ent.Edge {
 			Field("source_id").
 			Unique().
 			Required(),
+		edge.To("publications", Publication.Type),
 	}
 }

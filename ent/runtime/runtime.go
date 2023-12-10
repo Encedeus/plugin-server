@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Encedeus/pluginServer/ent/plugin"
+	"github.com/Encedeus/pluginServer/ent/publication"
 	"github.com/Encedeus/pluginServer/ent/schema"
 	"github.com/Encedeus/pluginServer/ent/user"
 	"github.com/google/uuid"
@@ -21,6 +22,20 @@ func init() {
 	pluginDescID := pluginFields[0].Descriptor()
 	// plugin.DefaultID holds the default value on creation for the id field.
 	plugin.DefaultID = pluginDescID.Default.(func() uuid.UUID)
+	publicationFields := schema.Publication{}.Fields()
+	_ = publicationFields
+	// publicationDescCreatedAt is the schema descriptor for created_at field.
+	publicationDescCreatedAt := publicationFields[0].Descriptor()
+	// publication.DefaultCreatedAt holds the default value on creation for the created_at field.
+	publication.DefaultCreatedAt = publicationDescCreatedAt.Default.(func() time.Time)
+	// publicationDescIsDeprecated is the schema descriptor for is_deprecated field.
+	publicationDescIsDeprecated := publicationFields[1].Descriptor()
+	// publication.DefaultIsDeprecated holds the default value on creation for the is_deprecated field.
+	publication.DefaultIsDeprecated = publicationDescIsDeprecated.Default.(bool)
+	// publicationDescName is the schema descriptor for name field.
+	publicationDescName := publicationFields[2].Descriptor()
+	// publication.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	publication.NameValidator = publicationDescName.Validators[0].(func(string) error)
 	userHooks := schema.User{}.Hooks()
 	user.Hooks[0] = userHooks[0]
 	user.Hooks[1] = userHooks[1]

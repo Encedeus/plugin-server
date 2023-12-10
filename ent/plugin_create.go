@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/Encedeus/pluginServer/ent/plugin"
+	"github.com/Encedeus/pluginServer/ent/publication"
 	"github.com/Encedeus/pluginServer/ent/source"
 	"github.com/Encedeus/pluginServer/ent/user"
 	"github.com/google/uuid"
@@ -62,6 +63,21 @@ func (pc *PluginCreate) SetOwner(u *User) *PluginCreate {
 // SetSource sets the "source" edge to the Source entity.
 func (pc *PluginCreate) SetSource(s *Source) *PluginCreate {
 	return pc.SetSourceID(s.ID)
+}
+
+// AddPublicationIDs adds the "publications" edge to the Publication entity by IDs.
+func (pc *PluginCreate) AddPublicationIDs(ids ...int) *PluginCreate {
+	pc.mutation.AddPublicationIDs(ids...)
+	return pc
+}
+
+// AddPublications adds the "publications" edges to the Publication entity.
+func (pc *PluginCreate) AddPublications(p ...*Publication) *PluginCreate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return pc.AddPublicationIDs(ids...)
 }
 
 // Mutation returns the PluginMutation object of the builder.
@@ -193,6 +209,22 @@ func (pc *PluginCreate) createSpec() (*Plugin, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.SourceID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := pc.mutation.PublicationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   plugin.PublicationsTable,
+			Columns: []string{plugin.PublicationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(publication.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

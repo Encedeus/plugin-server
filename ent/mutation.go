@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/Encedeus/pluginServer/ent/plugin"
 	"github.com/Encedeus/pluginServer/ent/predicate"
+	"github.com/Encedeus/pluginServer/ent/publication"
 	"github.com/Encedeus/pluginServer/ent/source"
 	"github.com/Encedeus/pluginServer/ent/user"
 	"github.com/google/uuid"
@@ -27,26 +28,30 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypePlugin = "Plugin"
-	TypeSource = "Source"
-	TypeUser   = "User"
+	TypePlugin      = "Plugin"
+	TypePublication = "Publication"
+	TypeSource      = "Source"
+	TypeUser        = "User"
 )
 
 // PluginMutation represents an operation that mutates the Plugin nodes in the graph.
 type PluginMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *uuid.UUID
-	name          *string
-	clearedFields map[string]struct{}
-	owner         *uuid.UUID
-	clearedowner  bool
-	source        *int
-	clearedsource bool
-	done          bool
-	oldValue      func(context.Context) (*Plugin, error)
-	predicates    []predicate.Plugin
+	op                  Op
+	typ                 string
+	id                  *uuid.UUID
+	name                *string
+	clearedFields       map[string]struct{}
+	owner               *uuid.UUID
+	clearedowner        bool
+	source              *int
+	clearedsource       bool
+	publications        map[int]struct{}
+	removedpublications map[int]struct{}
+	clearedpublications bool
+	done                bool
+	oldValue            func(context.Context) (*Plugin, error)
+	predicates          []predicate.Plugin
 }
 
 var _ ent.Mutation = (*PluginMutation)(nil)
@@ -315,6 +320,60 @@ func (m *PluginMutation) ResetSource() {
 	m.clearedsource = false
 }
 
+// AddPublicationIDs adds the "publications" edge to the Publication entity by ids.
+func (m *PluginMutation) AddPublicationIDs(ids ...int) {
+	if m.publications == nil {
+		m.publications = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.publications[ids[i]] = struct{}{}
+	}
+}
+
+// ClearPublications clears the "publications" edge to the Publication entity.
+func (m *PluginMutation) ClearPublications() {
+	m.clearedpublications = true
+}
+
+// PublicationsCleared reports if the "publications" edge to the Publication entity was cleared.
+func (m *PluginMutation) PublicationsCleared() bool {
+	return m.clearedpublications
+}
+
+// RemovePublicationIDs removes the "publications" edge to the Publication entity by IDs.
+func (m *PluginMutation) RemovePublicationIDs(ids ...int) {
+	if m.removedpublications == nil {
+		m.removedpublications = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.publications, ids[i])
+		m.removedpublications[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedPublications returns the removed IDs of the "publications" edge to the Publication entity.
+func (m *PluginMutation) RemovedPublicationsIDs() (ids []int) {
+	for id := range m.removedpublications {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// PublicationsIDs returns the "publications" edge IDs in the mutation.
+func (m *PluginMutation) PublicationsIDs() (ids []int) {
+	for id := range m.publications {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetPublications resets all changes to the "publications" edge.
+func (m *PluginMutation) ResetPublications() {
+	m.publications = nil
+	m.clearedpublications = false
+	m.removedpublications = nil
+}
+
 // Where appends a list predicates to the PluginMutation builder.
 func (m *PluginMutation) Where(ps ...predicate.Plugin) {
 	m.predicates = append(m.predicates, ps...)
@@ -485,12 +544,15 @@ func (m *PluginMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *PluginMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.owner != nil {
 		edges = append(edges, plugin.EdgeOwner)
 	}
 	if m.source != nil {
 		edges = append(edges, plugin.EdgeSource)
+	}
+	if m.publications != nil {
+		edges = append(edges, plugin.EdgePublications)
 	}
 	return edges
 }
@@ -507,30 +569,50 @@ func (m *PluginMutation) AddedIDs(name string) []ent.Value {
 		if id := m.source; id != nil {
 			return []ent.Value{*id}
 		}
+	case plugin.EdgePublications:
+		ids := make([]ent.Value, 0, len(m.publications))
+		for id := range m.publications {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *PluginMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
+	if m.removedpublications != nil {
+		edges = append(edges, plugin.EdgePublications)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *PluginMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case plugin.EdgePublications:
+		ids := make([]ent.Value, 0, len(m.removedpublications))
+		for id := range m.removedpublications {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *PluginMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedowner {
 		edges = append(edges, plugin.EdgeOwner)
 	}
 	if m.clearedsource {
 		edges = append(edges, plugin.EdgeSource)
+	}
+	if m.clearedpublications {
+		edges = append(edges, plugin.EdgePublications)
 	}
 	return edges
 }
@@ -543,6 +625,8 @@ func (m *PluginMutation) EdgeCleared(name string) bool {
 		return m.clearedowner
 	case plugin.EdgeSource:
 		return m.clearedsource
+	case plugin.EdgePublications:
+		return m.clearedpublications
 	}
 	return false
 }
@@ -571,8 +655,607 @@ func (m *PluginMutation) ResetEdge(name string) error {
 	case plugin.EdgeSource:
 		m.ResetSource()
 		return nil
+	case plugin.EdgePublications:
+		m.ResetPublications()
+		return nil
 	}
 	return fmt.Errorf("unknown Plugin edge %s", name)
+}
+
+// PublicationMutation represents an operation that mutates the Publication nodes in the graph.
+type PublicationMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	created_at    *time.Time
+	is_deprecated *bool
+	name          *string
+	uri_to_file   *string
+	clearedFields map[string]struct{}
+	plugin        *uuid.UUID
+	clearedplugin bool
+	done          bool
+	oldValue      func(context.Context) (*Publication, error)
+	predicates    []predicate.Publication
+}
+
+var _ ent.Mutation = (*PublicationMutation)(nil)
+
+// publicationOption allows management of the mutation configuration using functional options.
+type publicationOption func(*PublicationMutation)
+
+// newPublicationMutation creates new mutation for the Publication entity.
+func newPublicationMutation(c config, op Op, opts ...publicationOption) *PublicationMutation {
+	m := &PublicationMutation{
+		config:        c,
+		op:            op,
+		typ:           TypePublication,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withPublicationID sets the ID field of the mutation.
+func withPublicationID(id int) publicationOption {
+	return func(m *PublicationMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Publication
+		)
+		m.oldValue = func(ctx context.Context) (*Publication, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Publication.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withPublication sets the old Publication of the mutation.
+func withPublication(node *Publication) publicationOption {
+	return func(m *PublicationMutation) {
+		m.oldValue = func(context.Context) (*Publication, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m PublicationMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m PublicationMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *PublicationMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *PublicationMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Publication.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *PublicationMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *PublicationMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Publication entity.
+// If the Publication object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PublicationMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *PublicationMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetIsDeprecated sets the "is_deprecated" field.
+func (m *PublicationMutation) SetIsDeprecated(b bool) {
+	m.is_deprecated = &b
+}
+
+// IsDeprecated returns the value of the "is_deprecated" field in the mutation.
+func (m *PublicationMutation) IsDeprecated() (r bool, exists bool) {
+	v := m.is_deprecated
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsDeprecated returns the old "is_deprecated" field's value of the Publication entity.
+// If the Publication object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PublicationMutation) OldIsDeprecated(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsDeprecated is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsDeprecated requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsDeprecated: %w", err)
+	}
+	return oldValue.IsDeprecated, nil
+}
+
+// ResetIsDeprecated resets all changes to the "is_deprecated" field.
+func (m *PublicationMutation) ResetIsDeprecated() {
+	m.is_deprecated = nil
+}
+
+// SetName sets the "name" field.
+func (m *PublicationMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *PublicationMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Publication entity.
+// If the Publication object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PublicationMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *PublicationMutation) ResetName() {
+	m.name = nil
+}
+
+// SetURIToFile sets the "uri_to_file" field.
+func (m *PublicationMutation) SetURIToFile(s string) {
+	m.uri_to_file = &s
+}
+
+// URIToFile returns the value of the "uri_to_file" field in the mutation.
+func (m *PublicationMutation) URIToFile() (r string, exists bool) {
+	v := m.uri_to_file
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldURIToFile returns the old "uri_to_file" field's value of the Publication entity.
+// If the Publication object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PublicationMutation) OldURIToFile(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldURIToFile is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldURIToFile requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldURIToFile: %w", err)
+	}
+	return oldValue.URIToFile, nil
+}
+
+// ResetURIToFile resets all changes to the "uri_to_file" field.
+func (m *PublicationMutation) ResetURIToFile() {
+	m.uri_to_file = nil
+}
+
+// SetPluginID sets the "plugin_id" field.
+func (m *PublicationMutation) SetPluginID(u uuid.UUID) {
+	m.plugin = &u
+}
+
+// PluginID returns the value of the "plugin_id" field in the mutation.
+func (m *PublicationMutation) PluginID() (r uuid.UUID, exists bool) {
+	v := m.plugin
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPluginID returns the old "plugin_id" field's value of the Publication entity.
+// If the Publication object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PublicationMutation) OldPluginID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPluginID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPluginID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPluginID: %w", err)
+	}
+	return oldValue.PluginID, nil
+}
+
+// ResetPluginID resets all changes to the "plugin_id" field.
+func (m *PublicationMutation) ResetPluginID() {
+	m.plugin = nil
+}
+
+// ClearPlugin clears the "plugin" edge to the Plugin entity.
+func (m *PublicationMutation) ClearPlugin() {
+	m.clearedplugin = true
+	m.clearedFields[publication.FieldPluginID] = struct{}{}
+}
+
+// PluginCleared reports if the "plugin" edge to the Plugin entity was cleared.
+func (m *PublicationMutation) PluginCleared() bool {
+	return m.clearedplugin
+}
+
+// PluginIDs returns the "plugin" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// PluginID instead. It exists only for internal usage by the builders.
+func (m *PublicationMutation) PluginIDs() (ids []uuid.UUID) {
+	if id := m.plugin; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetPlugin resets all changes to the "plugin" edge.
+func (m *PublicationMutation) ResetPlugin() {
+	m.plugin = nil
+	m.clearedplugin = false
+}
+
+// Where appends a list predicates to the PublicationMutation builder.
+func (m *PublicationMutation) Where(ps ...predicate.Publication) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the PublicationMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *PublicationMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Publication, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *PublicationMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *PublicationMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Publication).
+func (m *PublicationMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *PublicationMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.created_at != nil {
+		fields = append(fields, publication.FieldCreatedAt)
+	}
+	if m.is_deprecated != nil {
+		fields = append(fields, publication.FieldIsDeprecated)
+	}
+	if m.name != nil {
+		fields = append(fields, publication.FieldName)
+	}
+	if m.uri_to_file != nil {
+		fields = append(fields, publication.FieldURIToFile)
+	}
+	if m.plugin != nil {
+		fields = append(fields, publication.FieldPluginID)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *PublicationMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case publication.FieldCreatedAt:
+		return m.CreatedAt()
+	case publication.FieldIsDeprecated:
+		return m.IsDeprecated()
+	case publication.FieldName:
+		return m.Name()
+	case publication.FieldURIToFile:
+		return m.URIToFile()
+	case publication.FieldPluginID:
+		return m.PluginID()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *PublicationMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case publication.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case publication.FieldIsDeprecated:
+		return m.OldIsDeprecated(ctx)
+	case publication.FieldName:
+		return m.OldName(ctx)
+	case publication.FieldURIToFile:
+		return m.OldURIToFile(ctx)
+	case publication.FieldPluginID:
+		return m.OldPluginID(ctx)
+	}
+	return nil, fmt.Errorf("unknown Publication field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *PublicationMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case publication.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case publication.FieldIsDeprecated:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsDeprecated(v)
+		return nil
+	case publication.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case publication.FieldURIToFile:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetURIToFile(v)
+		return nil
+	case publication.FieldPluginID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPluginID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Publication field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *PublicationMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *PublicationMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *PublicationMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Publication numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *PublicationMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *PublicationMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *PublicationMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Publication nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *PublicationMutation) ResetField(name string) error {
+	switch name {
+	case publication.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case publication.FieldIsDeprecated:
+		m.ResetIsDeprecated()
+		return nil
+	case publication.FieldName:
+		m.ResetName()
+		return nil
+	case publication.FieldURIToFile:
+		m.ResetURIToFile()
+		return nil
+	case publication.FieldPluginID:
+		m.ResetPluginID()
+		return nil
+	}
+	return fmt.Errorf("unknown Publication field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *PublicationMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.plugin != nil {
+		edges = append(edges, publication.EdgePlugin)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *PublicationMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case publication.EdgePlugin:
+		if id := m.plugin; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *PublicationMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *PublicationMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *PublicationMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedplugin {
+		edges = append(edges, publication.EdgePlugin)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *PublicationMutation) EdgeCleared(name string) bool {
+	switch name {
+	case publication.EdgePlugin:
+		return m.clearedplugin
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *PublicationMutation) ClearEdge(name string) error {
+	switch name {
+	case publication.EdgePlugin:
+		m.ClearPlugin()
+		return nil
+	}
+	return fmt.Errorf("unknown Publication unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *PublicationMutation) ResetEdge(name string) error {
+	switch name {
+	case publication.EdgePlugin:
+		m.ResetPlugin()
+		return nil
+	}
+	return fmt.Errorf("unknown Publication edge %s", name)
 }
 
 // SourceMutation represents an operation that mutates the Source nodes in the graph.

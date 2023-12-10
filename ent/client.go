@@ -17,6 +17,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/Encedeus/pluginServer/ent/plugin"
+	"github.com/Encedeus/pluginServer/ent/publication"
 	"github.com/Encedeus/pluginServer/ent/source"
 	"github.com/Encedeus/pluginServer/ent/user"
 )
@@ -28,6 +29,8 @@ type Client struct {
 	Schema *migrate.Schema
 	// Plugin is the client for interacting with the Plugin builders.
 	Plugin *PluginClient
+	// Publication is the client for interacting with the Publication builders.
+	Publication *PublicationClient
 	// Source is the client for interacting with the Source builders.
 	Source *SourceClient
 	// User is the client for interacting with the User builders.
@@ -46,6 +49,7 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Plugin = NewPluginClient(c.config)
+	c.Publication = NewPublicationClient(c.config)
 	c.Source = NewSourceClient(c.config)
 	c.User = NewUserClient(c.config)
 }
@@ -131,11 +135,12 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		Plugin: NewPluginClient(cfg),
-		Source: NewSourceClient(cfg),
-		User:   NewUserClient(cfg),
+		ctx:         ctx,
+		config:      cfg,
+		Plugin:      NewPluginClient(cfg),
+		Publication: NewPublicationClient(cfg),
+		Source:      NewSourceClient(cfg),
+		User:        NewUserClient(cfg),
 	}, nil
 }
 
@@ -153,11 +158,12 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		Plugin: NewPluginClient(cfg),
-		Source: NewSourceClient(cfg),
-		User:   NewUserClient(cfg),
+		ctx:         ctx,
+		config:      cfg,
+		Plugin:      NewPluginClient(cfg),
+		Publication: NewPublicationClient(cfg),
+		Source:      NewSourceClient(cfg),
+		User:        NewUserClient(cfg),
 	}, nil
 }
 
@@ -187,6 +193,7 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.Plugin.Use(hooks...)
+	c.Publication.Use(hooks...)
 	c.Source.Use(hooks...)
 	c.User.Use(hooks...)
 }
@@ -195,6 +202,7 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.Plugin.Intercept(interceptors...)
+	c.Publication.Intercept(interceptors...)
 	c.Source.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
 }
@@ -204,6 +212,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *PluginMutation:
 		return c.Plugin.mutate(ctx, m)
+	case *PublicationMutation:
+		return c.Publication.mutate(ctx, m)
 	case *SourceMutation:
 		return c.Source.mutate(ctx, m)
 	case *UserMutation:
@@ -353,6 +363,22 @@ func (c *PluginClient) QuerySource(pl *Plugin) *SourceQuery {
 	return query
 }
 
+// QueryPublications queries the publications edge of a Plugin.
+func (c *PluginClient) QueryPublications(pl *Plugin) *PublicationQuery {
+	query := (&PublicationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := pl.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(plugin.Table, plugin.FieldID, id),
+			sqlgraph.To(publication.Table, publication.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, plugin.PublicationsTable, plugin.PublicationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(pl.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *PluginClient) Hooks() []Hook {
 	return c.hooks.Plugin
@@ -375,6 +401,155 @@ func (c *PluginClient) mutate(ctx context.Context, m *PluginMutation) (Value, er
 		return (&PluginDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Plugin mutation op: %q", m.Op())
+	}
+}
+
+// PublicationClient is a client for the Publication schema.
+type PublicationClient struct {
+	config
+}
+
+// NewPublicationClient returns a client for the Publication from the given config.
+func NewPublicationClient(c config) *PublicationClient {
+	return &PublicationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `publication.Hooks(f(g(h())))`.
+func (c *PublicationClient) Use(hooks ...Hook) {
+	c.hooks.Publication = append(c.hooks.Publication, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `publication.Intercept(f(g(h())))`.
+func (c *PublicationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Publication = append(c.inters.Publication, interceptors...)
+}
+
+// Create returns a builder for creating a Publication entity.
+func (c *PublicationClient) Create() *PublicationCreate {
+	mutation := newPublicationMutation(c.config, OpCreate)
+	return &PublicationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Publication entities.
+func (c *PublicationClient) CreateBulk(builders ...*PublicationCreate) *PublicationCreateBulk {
+	return &PublicationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PublicationClient) MapCreateBulk(slice any, setFunc func(*PublicationCreate, int)) *PublicationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PublicationCreateBulk{err: fmt.Errorf("calling to PublicationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PublicationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PublicationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Publication.
+func (c *PublicationClient) Update() *PublicationUpdate {
+	mutation := newPublicationMutation(c.config, OpUpdate)
+	return &PublicationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PublicationClient) UpdateOne(pu *Publication) *PublicationUpdateOne {
+	mutation := newPublicationMutation(c.config, OpUpdateOne, withPublication(pu))
+	return &PublicationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PublicationClient) UpdateOneID(id int) *PublicationUpdateOne {
+	mutation := newPublicationMutation(c.config, OpUpdateOne, withPublicationID(id))
+	return &PublicationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Publication.
+func (c *PublicationClient) Delete() *PublicationDelete {
+	mutation := newPublicationMutation(c.config, OpDelete)
+	return &PublicationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PublicationClient) DeleteOne(pu *Publication) *PublicationDeleteOne {
+	return c.DeleteOneID(pu.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PublicationClient) DeleteOneID(id int) *PublicationDeleteOne {
+	builder := c.Delete().Where(publication.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PublicationDeleteOne{builder}
+}
+
+// Query returns a query builder for Publication.
+func (c *PublicationClient) Query() *PublicationQuery {
+	return &PublicationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePublication},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Publication entity by its id.
+func (c *PublicationClient) Get(ctx context.Context, id int) (*Publication, error) {
+	return c.Query().Where(publication.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PublicationClient) GetX(ctx context.Context, id int) *Publication {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPlugin queries the plugin edge of a Publication.
+func (c *PublicationClient) QueryPlugin(pu *Publication) *PluginQuery {
+	query := (&PluginClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := pu.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(publication.Table, publication.FieldID, id),
+			sqlgraph.To(plugin.Table, plugin.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, publication.PluginTable, publication.PluginColumn),
+		)
+		fromV = sqlgraph.Neighbors(pu.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *PublicationClient) Hooks() []Hook {
+	return c.hooks.Publication
+}
+
+// Interceptors returns the client interceptors.
+func (c *PublicationClient) Interceptors() []Interceptor {
+	return c.inters.Publication
+}
+
+func (c *PublicationClient) mutate(ctx context.Context, m *PublicationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PublicationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PublicationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PublicationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PublicationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Publication mutation op: %q", m.Op())
 	}
 }
 
@@ -680,9 +855,9 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Plugin, Source, User []ent.Hook
+		Plugin, Publication, Source, User []ent.Hook
 	}
 	inters struct {
-		Plugin, Source, User []ent.Interceptor
+		Plugin, Publication, Source, User []ent.Interceptor
 	}
 )

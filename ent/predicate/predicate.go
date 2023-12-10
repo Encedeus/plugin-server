@@ -9,6 +9,9 @@ import (
 // Plugin is the predicate function for plugin builders.
 type Plugin func(*sql.Selector)
 
+// Publication is the predicate function for publication builders.
+type Publication func(*sql.Selector)
+
 // Source is the predicate function for source builders.
 type Source func(*sql.Selector)
 

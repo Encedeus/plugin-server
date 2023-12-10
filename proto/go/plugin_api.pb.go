@@ -7,6 +7,7 @@
 package protoapi
 
 import (
+	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -20,19 +21,137 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type Source struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	RepoUri string `protobuf:"bytes,1,opt,name=repoUri,proto3" json:"repoUri,omitempty"`
+}
+
+func (x *Source) Reset() {
+	*x = Source{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_plugin_api_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Source) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Source) ProtoMessage() {}
+
+func (x *Source) ProtoReflect() protoreflect.Message {
+	mi := &file_plugin_api_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Source.ProtoReflect.Descriptor instead.
+func (*Source) Descriptor() ([]byte, []int) {
+	return file_plugin_api_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Source) GetRepoUri() string {
+	if x != nil {
+		return x.RepoUri
+	}
+	return ""
+}
+
+type Release struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Name         string               `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	PublishedAt  *timestamp.Timestamp `protobuf:"bytes,2,opt,name=publishedAt,proto3" json:"publishedAt,omitempty"`
+	IsDeprecated bool                 `protobuf:"varint,3,opt,name=isDeprecated,proto3" json:"isDeprecated,omitempty"`
+	DownloadURI  string               `protobuf:"bytes,4,opt,name=DownloadURI,proto3" json:"DownloadURI,omitempty"`
+}
+
+func (x *Release) Reset() {
+	*x = Release{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_plugin_api_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Release) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Release) ProtoMessage() {}
+
+func (x *Release) ProtoReflect() protoreflect.Message {
+	mi := &file_plugin_api_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Release.ProtoReflect.Descriptor instead.
+func (*Release) Descriptor() ([]byte, []int) {
+	return file_plugin_api_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Release) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Release) GetPublishedAt() *timestamp.Timestamp {
+	if x != nil {
+		return x.PublishedAt
+	}
+	return nil
+}
+
+func (x *Release) GetIsDeprecated() bool {
+	if x != nil {
+		return x.IsDeprecated
+	}
+	return false
+}
+
+func (x *Release) GetDownloadURI() string {
+	if x != nil {
+		return x.DownloadURI
+	}
+	return ""
+}
+
 type PluginCreateRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name       string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	GithubRepo string `protobuf:"bytes,2,opt,name=githubRepo,proto3" json:"githubRepo,omitempty"`
+	Name    string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	RepoUri string `protobuf:"bytes,2,opt,name=repoUri,proto3" json:"repoUri,omitempty"`
 }
 
 func (x *PluginCreateRequest) Reset() {
 	*x = PluginCreateRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_plugin_api_proto_msgTypes[0]
+		mi := &file_plugin_api_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -45,7 +164,7 @@ func (x *PluginCreateRequest) String() string {
 func (*PluginCreateRequest) ProtoMessage() {}
 
 func (x *PluginCreateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plugin_api_proto_msgTypes[0]
+	mi := &file_plugin_api_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -58,7 +177,7 @@ func (x *PluginCreateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PluginCreateRequest.ProtoReflect.Descriptor instead.
 func (*PluginCreateRequest) Descriptor() ([]byte, []int) {
-	return file_plugin_api_proto_rawDescGZIP(), []int{0}
+	return file_plugin_api_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *PluginCreateRequest) GetName() string {
@@ -68,9 +187,151 @@ func (x *PluginCreateRequest) GetName() string {
 	return ""
 }
 
-func (x *PluginCreateRequest) GetGithubRepo() string {
+func (x *PluginCreateRequest) GetRepoUri() string {
 	if x != nil {
-		return x.GithubRepo
+		return x.RepoUri
+	}
+	return ""
+}
+
+type Plugin struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id        string     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name      string     `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	OwnerName string     `protobuf:"bytes,3,opt,name=ownerName,proto3" json:"ownerName,omitempty"`
+	Source    *Source    `protobuf:"bytes,4,opt,name=source,proto3" json:"source,omitempty"`
+	Releases  []*Release `protobuf:"bytes,5,rep,name=releases,proto3" json:"releases,omitempty"`
+}
+
+func (x *Plugin) Reset() {
+	*x = Plugin{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_plugin_api_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Plugin) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Plugin) ProtoMessage() {}
+
+func (x *Plugin) ProtoReflect() protoreflect.Message {
+	mi := &file_plugin_api_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Plugin.ProtoReflect.Descriptor instead.
+func (*Plugin) Descriptor() ([]byte, []int) {
+	return file_plugin_api_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *Plugin) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Plugin) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Plugin) GetOwnerName() string {
+	if x != nil {
+		return x.OwnerName
+	}
+	return ""
+}
+
+func (x *Plugin) GetSource() *Source {
+	if x != nil {
+		return x.Source
+	}
+	return nil
+}
+
+func (x *Plugin) GetReleases() []*Release {
+	if x != nil {
+		return x.Releases
+	}
+	return nil
+}
+
+type PluginPublishReleaseRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	PluginName       string `protobuf:"bytes,1,opt,name=pluginName,proto3" json:"pluginName,omitempty"`
+	GithubReleaseTag string `protobuf:"bytes,2,opt,name=githubReleaseTag,proto3" json:"githubReleaseTag,omitempty"`
+	Name             string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+}
+
+func (x *PluginPublishReleaseRequest) Reset() {
+	*x = PluginPublishReleaseRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_plugin_api_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PluginPublishReleaseRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PluginPublishReleaseRequest) ProtoMessage() {}
+
+func (x *PluginPublishReleaseRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plugin_api_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PluginPublishReleaseRequest.ProtoReflect.Descriptor instead.
+func (*PluginPublishReleaseRequest) Descriptor() ([]byte, []int) {
+	return file_plugin_api_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *PluginPublishReleaseRequest) GetPluginName() string {
+	if x != nil {
+		return x.PluginName
+	}
+	return ""
+}
+
+func (x *PluginPublishReleaseRequest) GetGithubReleaseTag() string {
+	if x != nil {
+		return x.GithubReleaseTag
+	}
+	return ""
+}
+
+func (x *PluginPublishReleaseRequest) GetName() string {
+	if x != nil {
+		return x.Name
 	}
 	return ""
 }
@@ -79,13 +340,44 @@ var File_plugin_api_proto protoreflect.FileDescriptor
 
 var file_plugin_api_proto_rawDesc = []byte{
 	0x0a, 0x10, 0x70, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x5f, 0x61, 0x70, 0x69, 0x2e, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x22, 0x49, 0x0a, 0x13, 0x50, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x43, 0x72, 0x65, 0x61,
-	0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d,
-	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x1e, 0x0a,
-	0x0a, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x52, 0x65, 0x70, 0x6f, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x0a, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x52, 0x65, 0x70, 0x6f, 0x42, 0x0f, 0x5a,
-	0x0d, 0x2e, 0x2f, 0x67, 0x6f, 0x3b, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x61, 0x70, 0x69, 0x62, 0x06,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x74, 0x6f, 0x1a, 0x1f, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x62, 0x75, 0x66, 0x2f, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x2e, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x22, 0x22, 0x0a, 0x06, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x18, 0x0a,
+	0x07, 0x72, 0x65, 0x70, 0x6f, 0x55, 0x72, 0x69, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07,
+	0x72, 0x65, 0x70, 0x6f, 0x55, 0x72, 0x69, 0x22, 0xa1, 0x01, 0x0a, 0x07, 0x52, 0x65, 0x6c, 0x65,
+	0x61, 0x73, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x3c, 0x0a, 0x0b, 0x70, 0x75, 0x62, 0x6c, 0x69,
+	0x73, 0x68, 0x65, 0x64, 0x41, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67,
+	0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54,
+	0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x0b, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x73,
+	0x68, 0x65, 0x64, 0x41, 0x74, 0x12, 0x22, 0x0a, 0x0c, 0x69, 0x73, 0x44, 0x65, 0x70, 0x72, 0x65,
+	0x63, 0x61, 0x74, 0x65, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0c, 0x69, 0x73, 0x44,
+	0x65, 0x70, 0x72, 0x65, 0x63, 0x61, 0x74, 0x65, 0x64, 0x12, 0x20, 0x0a, 0x0b, 0x44, 0x6f, 0x77,
+	0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x55, 0x52, 0x49, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b,
+	0x44, 0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x55, 0x52, 0x49, 0x22, 0x43, 0x0a, 0x13, 0x50,
+	0x6c, 0x75, 0x67, 0x69, 0x6e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x72, 0x65, 0x70, 0x6f, 0x55, 0x72,
+	0x69, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x72, 0x65, 0x70, 0x6f, 0x55, 0x72, 0x69,
+	0x22, 0x91, 0x01, 0x0a, 0x06, 0x50, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x12, 0x0e, 0x0a, 0x02, 0x69,
+	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e,
+	0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12,
+	0x1c, 0x0a, 0x09, 0x6f, 0x77, 0x6e, 0x65, 0x72, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x03, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x09, 0x6f, 0x77, 0x6e, 0x65, 0x72, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x1f, 0x0a,
+	0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x07, 0x2e,
+	0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x24,
+	0x0a, 0x08, 0x72, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x73, 0x18, 0x05, 0x20, 0x03, 0x28, 0x0b,
+	0x32, 0x08, 0x2e, 0x52, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x52, 0x08, 0x72, 0x65, 0x6c, 0x65,
+	0x61, 0x73, 0x65, 0x73, 0x22, 0x7d, 0x0a, 0x1b, 0x50, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x50, 0x75,
+	0x62, 0x6c, 0x69, 0x73, 0x68, 0x52, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x12, 0x1e, 0x0a, 0x0a, 0x70, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x4e, 0x61, 0x6d,
+	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x70, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x4e,
+	0x61, 0x6d, 0x65, 0x12, 0x2a, 0x0a, 0x10, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x52, 0x65, 0x6c,
+	0x65, 0x61, 0x73, 0x65, 0x54, 0x61, 0x67, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x10, 0x67,
+	0x69, 0x74, 0x68, 0x75, 0x62, 0x52, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x54, 0x61, 0x67, 0x12,
+	0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e,
+	0x61, 0x6d, 0x65, 0x42, 0x0f, 0x5a, 0x0d, 0x2e, 0x2f, 0x67, 0x6f, 0x3b, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x61, 0x70, 0x69, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -100,16 +392,24 @@ func file_plugin_api_proto_rawDescGZIP() []byte {
 	return file_plugin_api_proto_rawDescData
 }
 
-var file_plugin_api_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_plugin_api_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_plugin_api_proto_goTypes = []interface{}{
-	(*PluginCreateRequest)(nil), // 0: PluginCreateRequest
+	(*Source)(nil),                      // 0: Source
+	(*Release)(nil),                     // 1: Release
+	(*PluginCreateRequest)(nil),         // 2: PluginCreateRequest
+	(*Plugin)(nil),                      // 3: Plugin
+	(*PluginPublishReleaseRequest)(nil), // 4: PluginPublishReleaseRequest
+	(*timestamp.Timestamp)(nil),         // 5: google.protobuf.Timestamp
 }
 var file_plugin_api_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	5, // 0: Release.publishedAt:type_name -> google.protobuf.Timestamp
+	0, // 1: Plugin.source:type_name -> Source
+	1, // 2: Plugin.releases:type_name -> Release
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_plugin_api_proto_init() }
@@ -119,7 +419,55 @@ func file_plugin_api_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_plugin_api_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Source); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_plugin_api_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Release); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_plugin_api_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PluginCreateRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_plugin_api_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Plugin); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_plugin_api_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PluginPublishReleaseRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -137,7 +485,7 @@ func file_plugin_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_plugin_api_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

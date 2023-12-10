@@ -37,9 +37,11 @@ type PluginEdges struct {
 	Owner *User `json:"owner,omitempty"`
 	// Source holds the value of the source edge.
 	Source *Source `json:"source,omitempty"`
+	// Publications holds the value of the publications edge.
+	Publications []*Publication `json:"publications,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // OwnerOrErr returns the Owner value or an error if the edge
@@ -66,6 +68,15 @@ func (e PluginEdges) SourceOrErr() (*Source, error) {
 		return e.Source, nil
 	}
 	return nil, &NotLoadedError{edge: "source"}
+}
+
+// PublicationsOrErr returns the Publications value or an error if the edge
+// was not loaded in eager-loading.
+func (e PluginEdges) PublicationsOrErr() ([]*Publication, error) {
+	if e.loadedTypes[2] {
+		return e.Publications, nil
+	}
+	return nil, &NotLoadedError{edge: "publications"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -139,6 +150,11 @@ func (pl *Plugin) QueryOwner() *UserQuery {
 // QuerySource queries the "source" edge of the Plugin entity.
 func (pl *Plugin) QuerySource() *SourceQuery {
 	return NewPluginClient(pl.config).QuerySource(pl)
+}
+
+// QueryPublications queries the "publications" edge of the Plugin entity.
+func (pl *Plugin) QueryPublications() *PublicationQuery {
+	return NewPluginClient(pl.config).QueryPublications(pl)
 }
 
 // Update returns a builder for updating this Plugin.

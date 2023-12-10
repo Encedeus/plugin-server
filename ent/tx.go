@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// Plugin is the client for interacting with the Plugin builders.
 	Plugin *PluginClient
+	// Publication is the client for interacting with the Publication builders.
+	Publication *PublicationClient
 	// Source is the client for interacting with the Source builders.
 	Source *SourceClient
 	// User is the client for interacting with the User builders.
@@ -150,6 +152,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Plugin = NewPluginClient(tx.config)
+	tx.Publication = NewPublicationClient(tx.config)
 	tx.Source = NewSourceClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }

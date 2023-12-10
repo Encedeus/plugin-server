@@ -220,6 +220,29 @@ func HasSourceWith(preds ...predicate.Source) predicate.Plugin {
 	})
 }
 
+// HasPublications applies the HasEdge predicate on the "publications" edge.
+func HasPublications() predicate.Plugin {
+	return predicate.Plugin(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, PublicationsTable, PublicationsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPublicationsWith applies the HasEdge predicate on the "publications" edge with a given conditions (other predicates).
+func HasPublicationsWith(preds ...predicate.Publication) predicate.Plugin {
+	return predicate.Plugin(func(s *sql.Selector) {
+		step := newPublicationsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Plugin) predicate.Plugin {
 	return predicate.Plugin(sql.AndPredicates(predicates...))

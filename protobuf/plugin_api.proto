@@ -1,8 +1,33 @@
 syntax = "proto3";
-
+import "google/protobuf/timestamp.proto";
 option go_package = "./go;protoapi";
 
+message Source {
+  string repoUri = 1;
+}
+
+message Release {
+  string name = 1;
+  google.protobuf.Timestamp publishedAt = 2;
+  bool isDeprecated = 3;
+  string DownloadURI = 4;
+}
+
 message PluginCreateRequest {
-   string name = 1;
-   string githubRepo = 2;
+  string name = 1;
+  string repoUri = 2;
+}
+
+message Plugin {
+  string id = 1;
+  string name = 2;
+  string ownerName = 3;
+  Source source = 4;
+  repeated Release releases = 5;
+}
+
+message PluginPublishReleaseRequest {
+  string pluginName = 1;
+  string githubReleaseTag = 2;
+  string name = 3;
 }

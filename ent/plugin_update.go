@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/Encedeus/pluginServer/ent/plugin"
 	"github.com/Encedeus/pluginServer/ent/predicate"
+	"github.com/Encedeus/pluginServer/ent/publication"
 	"github.com/Encedeus/pluginServer/ent/source"
 	"github.com/Encedeus/pluginServer/ent/user"
 	"github.com/google/uuid"
@@ -58,6 +59,21 @@ func (pu *PluginUpdate) SetSource(s *Source) *PluginUpdate {
 	return pu.SetSourceID(s.ID)
 }
 
+// AddPublicationIDs adds the "publications" edge to the Publication entity by IDs.
+func (pu *PluginUpdate) AddPublicationIDs(ids ...int) *PluginUpdate {
+	pu.mutation.AddPublicationIDs(ids...)
+	return pu
+}
+
+// AddPublications adds the "publications" edges to the Publication entity.
+func (pu *PluginUpdate) AddPublications(p ...*Publication) *PluginUpdate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return pu.AddPublicationIDs(ids...)
+}
+
 // Mutation returns the PluginMutation object of the builder.
 func (pu *PluginUpdate) Mutation() *PluginMutation {
 	return pu.mutation
@@ -73,6 +89,27 @@ func (pu *PluginUpdate) ClearOwner() *PluginUpdate {
 func (pu *PluginUpdate) ClearSource() *PluginUpdate {
 	pu.mutation.ClearSource()
 	return pu
+}
+
+// ClearPublications clears all "publications" edges to the Publication entity.
+func (pu *PluginUpdate) ClearPublications() *PluginUpdate {
+	pu.mutation.ClearPublications()
+	return pu
+}
+
+// RemovePublicationIDs removes the "publications" edge to Publication entities by IDs.
+func (pu *PluginUpdate) RemovePublicationIDs(ids ...int) *PluginUpdate {
+	pu.mutation.RemovePublicationIDs(ids...)
+	return pu
+}
+
+// RemovePublications removes "publications" edges to Publication entities.
+func (pu *PluginUpdate) RemovePublications(p ...*Publication) *PluginUpdate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return pu.RemovePublicationIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -186,6 +223,51 @@ func (pu *PluginUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if pu.mutation.PublicationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   plugin.PublicationsTable,
+			Columns: []string{plugin.PublicationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(publication.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.RemovedPublicationsIDs(); len(nodes) > 0 && !pu.mutation.PublicationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   plugin.PublicationsTable,
+			Columns: []string{plugin.PublicationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(publication.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.PublicationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   plugin.PublicationsTable,
+			Columns: []string{plugin.PublicationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(publication.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, pu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{plugin.Label}
@@ -234,6 +316,21 @@ func (puo *PluginUpdateOne) SetSource(s *Source) *PluginUpdateOne {
 	return puo.SetSourceID(s.ID)
 }
 
+// AddPublicationIDs adds the "publications" edge to the Publication entity by IDs.
+func (puo *PluginUpdateOne) AddPublicationIDs(ids ...int) *PluginUpdateOne {
+	puo.mutation.AddPublicationIDs(ids...)
+	return puo
+}
+
+// AddPublications adds the "publications" edges to the Publication entity.
+func (puo *PluginUpdateOne) AddPublications(p ...*Publication) *PluginUpdateOne {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return puo.AddPublicationIDs(ids...)
+}
+
 // Mutation returns the PluginMutation object of the builder.
 func (puo *PluginUpdateOne) Mutation() *PluginMutation {
 	return puo.mutation
@@ -249,6 +346,27 @@ func (puo *PluginUpdateOne) ClearOwner() *PluginUpdateOne {
 func (puo *PluginUpdateOne) ClearSource() *PluginUpdateOne {
 	puo.mutation.ClearSource()
 	return puo
+}
+
+// ClearPublications clears all "publications" edges to the Publication entity.
+func (puo *PluginUpdateOne) ClearPublications() *PluginUpdateOne {
+	puo.mutation.ClearPublications()
+	return puo
+}
+
+// RemovePublicationIDs removes the "publications" edge to Publication entities by IDs.
+func (puo *PluginUpdateOne) RemovePublicationIDs(ids ...int) *PluginUpdateOne {
+	puo.mutation.RemovePublicationIDs(ids...)
+	return puo
+}
+
+// RemovePublications removes "publications" edges to Publication entities.
+func (puo *PluginUpdateOne) RemovePublications(p ...*Publication) *PluginUpdateOne {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return puo.RemovePublicationIDs(ids...)
 }
 
 // Where appends a list predicates to the PluginUpdate builder.
@@ -385,6 +503,51 @@ func (puo *PluginUpdateOne) sqlSave(ctx context.Context) (_node *Plugin, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(source.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if puo.mutation.PublicationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   plugin.PublicationsTable,
+			Columns: []string{plugin.PublicationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(publication.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.RemovedPublicationsIDs(); len(nodes) > 0 && !puo.mutation.PublicationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   plugin.PublicationsTable,
+			Columns: []string{plugin.PublicationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(publication.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.PublicationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   plugin.PublicationsTable,
+			Columns: []string{plugin.PublicationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(publication.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

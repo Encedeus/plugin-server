@@ -52,13 +52,18 @@ type SMTPConfiguration struct {
 
 type ValidationConfig struct {
 	MaxEmailLen int `hcl:"max_email_len"`
-	MaxNameLen  int `hcl:"max_name_len"`
-	MinNameLen  int `hcl:"min_name_len"`
-	MaxPassLen  int `hcl:"max_pass_len"`
-	MinPassLen  int `hcl:"min_pass_len"`
+
+	MaxNameLen int `hcl:"max_name_len"`
+	MinNameLen int `hcl:"min_name_len"`
+
+	MaxPassLen int `hcl:"max_pass_len"`
+	MinPassLen int `hcl:"min_pass_len"`
 
 	MaxPluginNameLen int `hcl:"max_plugin_name_len"`
 	MinPluginNameLen int `hcl:"min_plugin_name_len"`
+
+	MaxReleaseNameLen int `hcl:"max_release_name_len"`
+	MinReleaseNameLen int `hcl:"min_release_name_len"`
 }
 
 func (s *ServerConfiguration) URI() string {

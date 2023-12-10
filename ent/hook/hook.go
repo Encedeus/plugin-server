@@ -21,6 +21,18 @@ func (f PluginFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PluginMutation", m)
 }
 
+// The PublicationFunc type is an adapter to allow the use of ordinary
+// function as Publication mutator.
+type PublicationFunc func(context.Context, *ent.PublicationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PublicationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.PublicationMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PublicationMutation", m)
+}
+
 // The SourceFunc type is an adapter to allow the use of ordinary
 // function as Source mutator.
 type SourceFunc func(context.Context, *ent.SourceMutation) (ent.Value, error)

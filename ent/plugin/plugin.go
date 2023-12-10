@@ -23,6 +23,8 @@ const (
 	EdgeOwner = "owner"
 	// EdgeSource holds the string denoting the source edge name in mutations.
 	EdgeSource = "source"
+	// EdgePublications holds the string denoting the publications edge name in mutations.
+	EdgePublications = "publications"
 	// Table holds the table name of the plugin in the database.
 	Table = "plugins"
 	// OwnerTable is the table that holds the owner relation/edge.
@@ -39,6 +41,13 @@ const (
 	SourceInverseTable = "sources"
 	// SourceColumn is the table column denoting the source relation/edge.
 	SourceColumn = "source_id"
+	// PublicationsTable is the table that holds the publications relation/edge.
+	PublicationsTable = "publications"
+	// PublicationsInverseTable is the table name for the Publication entity.
+	// It exists in this package in order to avoid circular dependency with the "publication" package.
+	PublicationsInverseTable = "publications"
+	// PublicationsColumn is the table column denoting the publications relation/edge.
+	PublicationsColumn = "plugin_id"
 )
 
 // Columns holds all SQL columns for plugin fields.
@@ -100,6 +109,20 @@ func BySourceField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newSourceStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByPublicationsCount orders the results by publications count.
+func ByPublicationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newPublicationsStep(), opts...)
+	}
+}
+
+// ByPublications orders the results by publications terms.
+func ByPublications(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newPublicationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newOwnerStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -112,5 +135,12 @@ func newSourceStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(SourceInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, SourceTable, SourceColumn),
+	)
+}
+func newPublicationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(PublicationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, PublicationsTable, PublicationsColumn),
 	)
 }
