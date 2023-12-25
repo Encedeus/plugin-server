@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/Encedeus/pluginServer/ent/plugin"
 	"github.com/Encedeus/pluginServer/ent/user"
+	"github.com/Encedeus/pluginServer/ent/verificationsession"
 	"github.com/google/uuid"
 )
 
@@ -137,6 +138,21 @@ func (uc *UserCreate) AddPlugin(p ...*Plugin) *UserCreate {
 		ids[i] = p[i].ID
 	}
 	return uc.AddPluginIDs(ids...)
+}
+
+// AddVerificationSessionIDs adds the "verification_session" edge to the VerificationSession entity by IDs.
+func (uc *UserCreate) AddVerificationSessionIDs(ids ...string) *UserCreate {
+	uc.mutation.AddVerificationSessionIDs(ids...)
+	return uc
+}
+
+// AddVerificationSession adds the "verification_session" edges to the VerificationSession entity.
+func (uc *UserCreate) AddVerificationSession(v ...*VerificationSession) *UserCreate {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return uc.AddVerificationSessionIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -320,6 +336,22 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(plugin.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.VerificationSessionIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.VerificationSessionTable,
+			Columns: []string{user.VerificationSessionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(verificationsession.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {

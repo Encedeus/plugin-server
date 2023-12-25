@@ -27,7 +27,12 @@ message Plugin {
 }
 
 message PluginPublishReleaseRequest {
-  string pluginName = 1;
+  string pluginId = 1;
   string githubReleaseTag = 2;
   string name = 3;
+}
+
+message PluginDeprecateReleaseRequest {
+  string pluginId = 1;
+  string releaseName = 2;
 }

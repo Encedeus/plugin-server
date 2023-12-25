@@ -5,6 +5,7 @@ import (
 	"github.com/Encedeus/pluginServer/api"
 	"github.com/Encedeus/pluginServer/ent"
 	"github.com/Encedeus/pluginServer/ent/plugin"
+	"github.com/Encedeus/pluginServer/ent/publication"
 	errors2 "github.com/Encedeus/pluginServer/errors"
 	"github.com/Encedeus/pluginServer/proto"
 	protoapi "github.com/Encedeus/pluginServer/proto/go"
@@ -81,11 +82,30 @@ func FindPluginByName(ctx context.Context, db *ent.Client, pluginName string) (*
 	return proto.EntPluginEntityToProtoPlugin(pluginData), nil
 }
 
-func GetPluginForReleasePublication(ctx context.Context, db *ent.Client, ownerId uuid.UUID, pluginName string) (*ent.Plugin, error) {
+func GetPluginWithAllEdges(ctx context.Context, db *ent.Client, pluginId uuid.UUID) (*ent.Plugin, error) {
+	pluginData, err := db.Plugin.Query().
+		Where(plugin.ID(pluginId)).
+		WithSource().
+		WithOwner().
+		WithPublications().
+		First(ctx)
+	if err != nil {
+
+		if ent.IsNotFound(err) {
+			return nil, errors2.ErrPluginNotFound
+		}
+
+		return nil, errors2.ErrQueryFailed
+	}
+
+	return pluginData, nil
+}
+
+func GetPluginWithSource(ctx context.Context, db *ent.Client, ownerId uuid.UUID, pluginId uuid.UUID) (*ent.Plugin, error) {
 	pluginData, err := db.Plugin.Query().
 		Where(
 			plugin.OwnerID(ownerId),
-			plugin.Name(pluginName),
+			plugin.ID(pluginId),
 		).WithSource().
 		First(ctx)
 
@@ -118,6 +138,12 @@ func PublishRelease(ctx context.Context, db *ent.Client, req *protoapi.PluginPub
 		return err
 	}
 
+	nameTaken, err := db.Publication.Query().Where(publication.PluginID(pluginData.ID), publication.Name(req.Name)).Exist(ctx)
+
+	if nameTaken {
+		return errors2.ErrReleaseNameAlreadyInUse
+	}
+
 	_, err = db.Publication.Create().
 		SetName(req.Name).
 		SetPlugin(pluginData).
@@ -125,6 +151,20 @@ func PublishRelease(ctx context.Context, db *ent.Client, req *protoapi.PluginPub
 		Save(ctx)
 
 	if err != nil {
+		return errors2.ErrQueryFailed
+	}
+
+	return nil
+}
+
+func DeprecateRelease(ctx context.Context, db *ent.Client, pluginId uuid.UUID, releaseName string) error {
+	err := db.Publication.Update().Where(publication.Name(releaseName), publication.PluginID(pluginId)).SetIsDeprecated(true).Exec(ctx)
+
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return errors2.ErrReleaseNotFound
+		}
+
 		return errors2.ErrQueryFailed
 	}
 

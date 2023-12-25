@@ -14,17 +14,19 @@ import (
 	"github.com/Encedeus/pluginServer/ent/plugin"
 	"github.com/Encedeus/pluginServer/ent/predicate"
 	"github.com/Encedeus/pluginServer/ent/user"
+	"github.com/Encedeus/pluginServer/ent/verificationsession"
 	"github.com/google/uuid"
 )
 
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	ctx        *QueryContext
-	order      []user.OrderOption
-	inters     []Interceptor
-	predicates []predicate.User
-	withPlugin *PluginQuery
+	ctx                     *QueryContext
+	order                   []user.OrderOption
+	inters                  []Interceptor
+	predicates              []predicate.User
+	withPlugin              *PluginQuery
+	withVerificationSession *VerificationSessionQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -76,6 +78,28 @@ func (uq *UserQuery) QueryPlugin() *PluginQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(plugin.Table, plugin.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, true, user.PluginTable, user.PluginColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryVerificationSession chains the current query on the "verification_session" edge.
+func (uq *UserQuery) QueryVerificationSession() *VerificationSessionQuery {
+	query := (&VerificationSessionClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(verificationsession.Table, verificationsession.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, user.VerificationSessionTable, user.VerificationSessionColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -270,12 +294,13 @@ func (uq *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:     uq.config,
-		ctx:        uq.ctx.Clone(),
-		order:      append([]user.OrderOption{}, uq.order...),
-		inters:     append([]Interceptor{}, uq.inters...),
-		predicates: append([]predicate.User{}, uq.predicates...),
-		withPlugin: uq.withPlugin.Clone(),
+		config:                  uq.config,
+		ctx:                     uq.ctx.Clone(),
+		order:                   append([]user.OrderOption{}, uq.order...),
+		inters:                  append([]Interceptor{}, uq.inters...),
+		predicates:              append([]predicate.User{}, uq.predicates...),
+		withPlugin:              uq.withPlugin.Clone(),
+		withVerificationSession: uq.withVerificationSession.Clone(),
 		// clone intermediate query.
 		sql:  uq.sql.Clone(),
 		path: uq.path,
@@ -290,6 +315,17 @@ func (uq *UserQuery) WithPlugin(opts ...func(*PluginQuery)) *UserQuery {
 		opt(query)
 	}
 	uq.withPlugin = query
+	return uq
+}
+
+// WithVerificationSession tells the query-builder to eager-load the nodes that are connected to
+// the "verification_session" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithVerificationSession(opts ...func(*VerificationSessionQuery)) *UserQuery {
+	query := (&VerificationSessionClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withVerificationSession = query
 	return uq
 }
 
@@ -371,8 +407,9 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = uq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			uq.withPlugin != nil,
+			uq.withVerificationSession != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -397,6 +434,15 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := uq.loadPlugin(ctx, query, nodes,
 			func(n *User) { n.Edges.Plugin = []*Plugin{} },
 			func(n *User, e *Plugin) { n.Edges.Plugin = append(n.Edges.Plugin, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uq.withVerificationSession; query != nil {
+		if err := uq.loadVerificationSession(ctx, query, nodes,
+			func(n *User) { n.Edges.VerificationSession = []*VerificationSession{} },
+			func(n *User, e *VerificationSession) {
+				n.Edges.VerificationSession = append(n.Edges.VerificationSession, e)
+			}); err != nil {
 			return nil, err
 		}
 	}
@@ -428,6 +474,36 @@ func (uq *UserQuery) loadPlugin(ctx context.Context, query *PluginQuery, nodes [
 		node, ok := nodeids[fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "owner_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (uq *UserQuery) loadVerificationSession(ctx context.Context, query *VerificationSessionQuery, nodes []*User, init func(*User), assign func(*User, *VerificationSession)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(verificationsession.FieldUserID)
+	}
+	query.Where(predicate.VerificationSession(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.VerificationSessionColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.UserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

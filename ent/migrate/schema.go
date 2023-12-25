@@ -87,12 +87,32 @@ var (
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 	}
+	// VerificationSessionsColumns holds the columns for the "verification_sessions" table.
+	VerificationSessionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString},
+		{Name: "user_id", Type: field.TypeUUID},
+	}
+	// VerificationSessionsTable holds the schema information for the "verification_sessions" table.
+	VerificationSessionsTable = &schema.Table{
+		Name:       "verification_sessions",
+		Columns:    VerificationSessionsColumns,
+		PrimaryKey: []*schema.Column{VerificationSessionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "verification_sessions_users_session",
+				Columns:    []*schema.Column{VerificationSessionsColumns[1]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		PluginsTable,
 		PublicationsTable,
 		SourcesTable,
 		UsersTable,
+		VerificationSessionsTable,
 	}
 )
 
@@ -100,4 +120,5 @@ func init() {
 	PluginsTable.ForeignKeys[0].RefTable = UsersTable
 	PluginsTable.ForeignKeys[1].RefTable = SourcesTable
 	PublicationsTable.ForeignKeys[0].RefTable = PluginsTable
+	VerificationSessionsTable.ForeignKeys[0].RefTable = UsersTable
 }

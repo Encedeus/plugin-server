@@ -44,9 +44,11 @@ type User struct {
 type UserEdges struct {
 	// Plugin holds the value of the plugin edge.
 	Plugin []*Plugin `json:"plugin,omitempty"`
+	// VerificationSession holds the value of the verification_session edge.
+	VerificationSession []*VerificationSession `json:"verification_session,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // PluginOrErr returns the Plugin value or an error if the edge
@@ -56,6 +58,15 @@ func (e UserEdges) PluginOrErr() ([]*Plugin, error) {
 		return e.Plugin, nil
 	}
 	return nil, &NotLoadedError{edge: "plugin"}
+}
+
+// VerificationSessionOrErr returns the VerificationSession value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) VerificationSessionOrErr() ([]*VerificationSession, error) {
+	if e.loadedTypes[1] {
+		return e.VerificationSession, nil
+	}
+	return nil, &NotLoadedError{edge: "verification_session"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -156,6 +167,11 @@ func (u *User) Value(name string) (ent.Value, error) {
 // QueryPlugin queries the "plugin" edge of the User entity.
 func (u *User) QueryPlugin() *PluginQuery {
 	return NewUserClient(u.config).QueryPlugin(u)
+}
+
+// QueryVerificationSession queries the "verification_session" edge of the User entity.
+func (u *User) QueryVerificationSession() *VerificationSessionQuery {
+	return NewUserClient(u.config).QueryVerificationSession(u)
 }
 
 // Update returns a builder for updating this User.

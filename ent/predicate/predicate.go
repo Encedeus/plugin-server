@@ -17,3 +17,6 @@ type Source func(*sql.Selector)
 
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
+
+// VerificationSession is the predicate function for verificationsession builders.
+type VerificationSession func(*sql.Selector)

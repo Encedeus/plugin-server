@@ -74,7 +74,7 @@ func GetReleaseFileURI(repo *protoapi.GithubRepo, tag string) (*string, error) {
 	//fmt.Println(err, body)
 
 	if res.StatusCode != 200 {
-		return nil, errors.GithubAPIError
+		return nil, errors.ErrGithubApiFailed
 	}
 
 	for _, asset := range body.Assets {

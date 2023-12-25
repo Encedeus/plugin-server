@@ -14,6 +14,7 @@ import (
 	"github.com/Encedeus/pluginServer/ent/plugin"
 	"github.com/Encedeus/pluginServer/ent/predicate"
 	"github.com/Encedeus/pluginServer/ent/user"
+	"github.com/Encedeus/pluginServer/ent/verificationsession"
 	"github.com/google/uuid"
 )
 
@@ -131,6 +132,21 @@ func (uu *UserUpdate) AddPlugin(p ...*Plugin) *UserUpdate {
 	return uu.AddPluginIDs(ids...)
 }
 
+// AddVerificationSessionIDs adds the "verification_session" edge to the VerificationSession entity by IDs.
+func (uu *UserUpdate) AddVerificationSessionIDs(ids ...string) *UserUpdate {
+	uu.mutation.AddVerificationSessionIDs(ids...)
+	return uu
+}
+
+// AddVerificationSession adds the "verification_session" edges to the VerificationSession entity.
+func (uu *UserUpdate) AddVerificationSession(v ...*VerificationSession) *UserUpdate {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return uu.AddVerificationSessionIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
@@ -155,6 +171,27 @@ func (uu *UserUpdate) RemovePlugin(p ...*Plugin) *UserUpdate {
 		ids[i] = p[i].ID
 	}
 	return uu.RemovePluginIDs(ids...)
+}
+
+// ClearVerificationSession clears all "verification_session" edges to the VerificationSession entity.
+func (uu *UserUpdate) ClearVerificationSession() *UserUpdate {
+	uu.mutation.ClearVerificationSession()
+	return uu
+}
+
+// RemoveVerificationSessionIDs removes the "verification_session" edge to VerificationSession entities by IDs.
+func (uu *UserUpdate) RemoveVerificationSessionIDs(ids ...string) *UserUpdate {
+	uu.mutation.RemoveVerificationSessionIDs(ids...)
+	return uu
+}
+
+// RemoveVerificationSession removes "verification_session" edges to VerificationSession entities.
+func (uu *UserUpdate) RemoveVerificationSession(v ...*VerificationSession) *UserUpdate {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return uu.RemoveVerificationSessionIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -298,6 +335,51 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if uu.mutation.VerificationSessionCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.VerificationSessionTable,
+			Columns: []string{user.VerificationSessionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(verificationsession.FieldID, field.TypeString),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedVerificationSessionIDs(); len(nodes) > 0 && !uu.mutation.VerificationSessionCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.VerificationSessionTable,
+			Columns: []string{user.VerificationSessionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(verificationsession.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.VerificationSessionIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.VerificationSessionTable,
+			Columns: []string{user.VerificationSessionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(verificationsession.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -419,6 +501,21 @@ func (uuo *UserUpdateOne) AddPlugin(p ...*Plugin) *UserUpdateOne {
 	return uuo.AddPluginIDs(ids...)
 }
 
+// AddVerificationSessionIDs adds the "verification_session" edge to the VerificationSession entity by IDs.
+func (uuo *UserUpdateOne) AddVerificationSessionIDs(ids ...string) *UserUpdateOne {
+	uuo.mutation.AddVerificationSessionIDs(ids...)
+	return uuo
+}
+
+// AddVerificationSession adds the "verification_session" edges to the VerificationSession entity.
+func (uuo *UserUpdateOne) AddVerificationSession(v ...*VerificationSession) *UserUpdateOne {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return uuo.AddVerificationSessionIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
@@ -443,6 +540,27 @@ func (uuo *UserUpdateOne) RemovePlugin(p ...*Plugin) *UserUpdateOne {
 		ids[i] = p[i].ID
 	}
 	return uuo.RemovePluginIDs(ids...)
+}
+
+// ClearVerificationSession clears all "verification_session" edges to the VerificationSession entity.
+func (uuo *UserUpdateOne) ClearVerificationSession() *UserUpdateOne {
+	uuo.mutation.ClearVerificationSession()
+	return uuo
+}
+
+// RemoveVerificationSessionIDs removes the "verification_session" edge to VerificationSession entities by IDs.
+func (uuo *UserUpdateOne) RemoveVerificationSessionIDs(ids ...string) *UserUpdateOne {
+	uuo.mutation.RemoveVerificationSessionIDs(ids...)
+	return uuo
+}
+
+// RemoveVerificationSession removes "verification_session" edges to VerificationSession entities.
+func (uuo *UserUpdateOne) RemoveVerificationSession(v ...*VerificationSession) *UserUpdateOne {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return uuo.RemoveVerificationSessionIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -609,6 +727,51 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(plugin.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.VerificationSessionCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.VerificationSessionTable,
+			Columns: []string{user.VerificationSessionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(verificationsession.FieldID, field.TypeString),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedVerificationSessionIDs(); len(nodes) > 0 && !uuo.mutation.VerificationSessionCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.VerificationSessionTable,
+			Columns: []string{user.VerificationSessionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(verificationsession.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.VerificationSessionIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.VerificationSessionTable,
+			Columns: []string{user.VerificationSessionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(verificationsession.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {

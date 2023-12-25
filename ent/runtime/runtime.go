@@ -9,6 +9,7 @@ import (
 	"github.com/Encedeus/pluginServer/ent/publication"
 	"github.com/Encedeus/pluginServer/ent/schema"
 	"github.com/Encedeus/pluginServer/ent/user"
+	"github.com/Encedeus/pluginServer/ent/verificationsession"
 	"github.com/google/uuid"
 )
 
@@ -71,6 +72,12 @@ func init() {
 	userDescID := userFields[0].Descriptor()
 	// user.DefaultID holds the default value on creation for the id field.
 	user.DefaultID = userDescID.Default.(func() uuid.UUID)
+	verificationsessionFields := schema.VerificationSession{}.Fields()
+	_ = verificationsessionFields
+	// verificationsessionDescID is the schema descriptor for id field.
+	verificationsessionDescID := verificationsessionFields[0].Descriptor()
+	// verificationsession.DefaultID holds the default value on creation for the id field.
+	verificationsession.DefaultID = verificationsessionDescID.Default.(func() string)
 }
 
 const (

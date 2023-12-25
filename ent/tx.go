@@ -20,6 +20,8 @@ type Tx struct {
 	Source *SourceClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// VerificationSession is the client for interacting with the VerificationSession builders.
+	VerificationSession *VerificationSessionClient
 
 	// lazily loaded.
 	client     *Client
@@ -155,6 +157,7 @@ func (tx *Tx) init() {
 	tx.Publication = NewPublicationClient(tx.config)
 	tx.Source = NewSourceClient(tx.config)
 	tx.User = NewUserClient(tx.config)
+	tx.VerificationSession = NewVerificationSessionClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

@@ -34,6 +34,8 @@ const (
 	FieldEmailVerified = "email_verified"
 	// EdgePlugin holds the string denoting the plugin edge name in mutations.
 	EdgePlugin = "plugin"
+	// EdgeVerificationSession holds the string denoting the verification_session edge name in mutations.
+	EdgeVerificationSession = "verification_session"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// PluginTable is the table that holds the plugin relation/edge.
@@ -43,6 +45,13 @@ const (
 	PluginInverseTable = "plugins"
 	// PluginColumn is the table column denoting the plugin relation/edge.
 	PluginColumn = "owner_id"
+	// VerificationSessionTable is the table that holds the verification_session relation/edge.
+	VerificationSessionTable = "verification_sessions"
+	// VerificationSessionInverseTable is the table name for the VerificationSession entity.
+	// It exists in this package in order to avoid circular dependency with the "verificationsession" package.
+	VerificationSessionInverseTable = "verification_sessions"
+	// VerificationSessionColumn is the table column denoting the verification_session relation/edge.
+	VerificationSessionColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -154,10 +163,31 @@ func ByPlugin(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newPluginStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByVerificationSessionCount orders the results by verification_session count.
+func ByVerificationSessionCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newVerificationSessionStep(), opts...)
+	}
+}
+
+// ByVerificationSession orders the results by verification_session terms.
+func ByVerificationSession(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newVerificationSessionStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newPluginStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(PluginInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, true, PluginTable, PluginColumn),
+	)
+}
+func newVerificationSessionStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(VerificationSessionInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, VerificationSessionTable, VerificationSessionColumn),
 	)
 }

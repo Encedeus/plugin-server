@@ -53,8 +53,6 @@ func CreateUser(ctx context.Context, db *ent.Client, req *protoapi.UserRegisterR
 		return nil, errors.ErrQueryFailed
 	}
 
-	fmt.Println(userData)
-
 	return userData, nil
 }
 func updateUserUsername(ctx context.Context, user ent.User, username string) error {
@@ -67,7 +65,6 @@ func updateUserUsername(ctx context.Context, user ent.User, username string) err
 	fmt.Println(user.Name, username)
 
 	if user.Name == username {
-		return errors.ErrNewUsernameEqualsOld
 		return errors.ErrNewUsernameEqualsOld
 	}
 
@@ -211,6 +208,26 @@ func FindOneUser(ctx context.Context, db *ent.Client, req *protoapi.UserFindOneR
 	return resp, nil
 }
 
+// GetUser is not to be used to fulfil requests, rather use FindOneUser
+func GetUser(ctx context.Context, db *ent.Client, userId uuid.UUID) (*ent.User, error) {
+	userData, err := db.User.Query().
+		Where(user.IDEQ(userId)).
+		First(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, errors.ErrUserNotFound
+		}
+
+		return nil, errors.ErrQueryFailed
+	}
+
+	if IsUserDeleted(userData) {
+		return nil, errors.ErrUserDeleted
+	}
+
+	return userData, nil
+}
+
 func DoesUserWithUUIDExist(ctx context.Context, db *ent.Client, userId uuid.UUID) bool {
 	userData, err := db.User.Query().Where(user.IDEQ(userId)).First(ctx)
 
@@ -268,4 +285,19 @@ func IsUserUpdated(ctx context.Context, db *ent.Client, userId uuid.UUID, issued
 	}
 
 	return false, nil
+}
+
+func VerifyUserEmail(ctx context.Context, db *ent.Client, userId uuid.UUID) error {
+	err := db.User.Update().SetEmailVerified(true).Where(user.ID(userId)).Exec(ctx)
+
+	if err != nil {
+
+		if ent.IsNotFound(err) {
+			log.Error("impossible condition; something went very wrong; nonexistent user acquired auth")
+		}
+
+		return errors.ErrQueryFailed
+	}
+
+	return nil
 }

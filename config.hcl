@@ -1,5 +1,5 @@
 server {
-  host = "localhost"
+  host = "0.0.0.0"
   port = 3001
 }
 
@@ -19,7 +19,7 @@ auth {
 smtp {
   host     = "smtp.gmail.com"
   port     = 587
-  name     = "noreply.encedeus@gmail.com"
+  address     = "noreply.encedeus@gmail.com"
   password = "fxzvqjqtxgfjmceh"
 }
 

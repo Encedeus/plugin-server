@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"github.com/Encedeus/pluginServer/email"
 	"github.com/Encedeus/pluginServer/ent"
 	errors2 "github.com/Encedeus/pluginServer/errors"
 	"github.com/Encedeus/pluginServer/hashing"
@@ -30,6 +31,19 @@ func (ac AuthController) registerRoutes(srv *Server) {
 		authEndpoint.POST("/signin", func(c echo.Context) error {
 			return ac.handleUserSignIn(c, srv.DB)
 		})
+
+		authEmailEndpoint := authEndpoint.Group("/email")
+		{
+
+			authEmailEndpoint.Use(middleware.AccessJWTAuth)
+
+			authEmailEndpoint.GET("/verify/:id", func(c echo.Context) error {
+				return ac.HandleVerifyEmail(c, srv.DB)
+			})
+			authEmailEndpoint.GET("/resend", func(c echo.Context) error {
+				return ac.HandleResendVerificationEmail(c, srv.DB)
+			})
+		}
 
 		authEndpoint.Use(middleware.RefreshJWTAuth)
 
@@ -61,6 +75,16 @@ func (AuthController) handleRegisterUser(c echo.Context, db *ent.Client) error {
 	}
 
 	accessToken, refreshToken, err := services.GetTokenPair(user.ID)
+
+	sessionData, err := services.StartVerificationSession(ctx, db, user.ID)
+	if err != nil {
+		return errors2.GetHTTPErrorResponse(c, err)
+	}
+
+	email.SendVerificationEmail(user.Email, sessionData.ID)
+	time.AfterFunc(time.Minute*3, func() {
+		services.CloseVerificationSession(ctx, db, sessionData.ID)
+	})
 
 	// set refresh token cookie
 	c.SetCookie(&http.Cookie{
@@ -164,4 +188,71 @@ func (AuthController) handleSignOut(c echo.Context, _ *ent.Client) error {
 	})
 
 	return c.NoContent(http.StatusOK)
+}
+
+func (AuthController) HandleVerifyEmail(c echo.Context, db *ent.Client) error {
+
+	ctx := c.Request().Context()
+	userId, _ := middleware.IdFromAccessContext(ctx)
+	sessionId := c.Param("id")
+
+	userData, err := services.GetUser(ctx, db, userId)
+	if err != nil {
+		return errors2.GetHTTPErrorResponse(c, err)
+	}
+
+	if userData.EmailVerified {
+		return errors2.GetHTTPErrorResponse(c, errors2.ErrEmailAlreadyVerified)
+	}
+
+	session, err := services.GetVerificationSessionById(ctx, db, sessionId)
+	if err != nil {
+		return errors2.GetHTTPErrorResponse(c, err)
+	}
+
+	if session.UserID != userId {
+		return errors2.GetHTTPErrorResponse(c, errors2.ErrUnauthorized)
+	}
+
+	err = services.CloseVerificationSession(ctx, db, sessionId)
+	if err != nil {
+		return errors2.GetHTTPErrorResponse(c, err)
+	}
+
+	err = services.VerifyUserEmail(ctx, db, userId)
+	if err != nil {
+		return errors2.GetHTTPErrorResponse(c, err)
+	}
+
+	return c.NoContent(200)
+}
+func (AuthController) HandleResendVerificationEmail(c echo.Context, db *ent.Client) error {
+	ctx := c.Request().Context()
+	userId, _ := middleware.IdFromAccessContext(ctx)
+
+	userData, err := services.GetUser(ctx, db, userId)
+	if err != nil {
+		return errors2.GetHTTPErrorResponse(c, err)
+	}
+
+	if userData.EmailVerified {
+		return errors2.GetHTTPErrorResponse(c, errors2.ErrEmailAlreadyVerified)
+	}
+
+	err = services.CloseVerificationSessionByUserId(ctx, db, userId)
+	if err != nil {
+		return errors2.GetHTTPErrorResponse(c, err)
+	}
+
+	session, err := services.StartVerificationSession(ctx, db, userId)
+	if err != nil {
+		return errors2.GetHTTPErrorResponse(c, err)
+	}
+
+	email.SendVerificationEmail(userData.Email, session.ID)
+	time.AfterFunc(time.Minute*3, func() {
+		services.CloseVerificationSession(ctx, db, session.ID)
+	})
+
+	return c.NoContent(200)
 }

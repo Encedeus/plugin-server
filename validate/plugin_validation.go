@@ -30,10 +30,10 @@ func IsPluginName(pluginName string) error {
 func IsReleaseName(username string) error {
 
 	if len(username) > config.Config.Validation.MaxReleaseNameLen {
-		return errors.ReleaseUsernameTooLong
+		return errors.ErrReleaseUsernameTooLong
 	}
 	if len(username) < config.Config.Validation.MinReleaseNameLen {
-		return errors.ReleaseUsernameTooShort
+		return errors.ErrReleaseUsernameTooShort
 	}
 
 	p := bluemonday.StrictPolicy()

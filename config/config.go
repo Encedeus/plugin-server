@@ -46,7 +46,7 @@ type StorageConfiguration struct {
 type SMTPConfiguration struct {
 	Host     string `hcl:"host"`
 	Port     int    `hcl:"port"`
-	Name     string `hcl:"name"`
+	Address  string `hcl:"address"`
 	Password string `hcl:"password"`
 }
 

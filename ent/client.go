@@ -20,6 +20,7 @@ import (
 	"github.com/Encedeus/pluginServer/ent/publication"
 	"github.com/Encedeus/pluginServer/ent/source"
 	"github.com/Encedeus/pluginServer/ent/user"
+	"github.com/Encedeus/pluginServer/ent/verificationsession"
 )
 
 // Client is the client that holds all ent builders.
@@ -35,6 +36,8 @@ type Client struct {
 	Source *SourceClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// VerificationSession is the client for interacting with the VerificationSession builders.
+	VerificationSession *VerificationSessionClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -52,6 +55,7 @@ func (c *Client) init() {
 	c.Publication = NewPublicationClient(c.config)
 	c.Source = NewSourceClient(c.config)
 	c.User = NewUserClient(c.config)
+	c.VerificationSession = NewVerificationSessionClient(c.config)
 }
 
 type (
@@ -135,12 +139,13 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:         ctx,
-		config:      cfg,
-		Plugin:      NewPluginClient(cfg),
-		Publication: NewPublicationClient(cfg),
-		Source:      NewSourceClient(cfg),
-		User:        NewUserClient(cfg),
+		ctx:                 ctx,
+		config:              cfg,
+		Plugin:              NewPluginClient(cfg),
+		Publication:         NewPublicationClient(cfg),
+		Source:              NewSourceClient(cfg),
+		User:                NewUserClient(cfg),
+		VerificationSession: NewVerificationSessionClient(cfg),
 	}, nil
 }
 
@@ -158,12 +163,13 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:         ctx,
-		config:      cfg,
-		Plugin:      NewPluginClient(cfg),
-		Publication: NewPublicationClient(cfg),
-		Source:      NewSourceClient(cfg),
-		User:        NewUserClient(cfg),
+		ctx:                 ctx,
+		config:              cfg,
+		Plugin:              NewPluginClient(cfg),
+		Publication:         NewPublicationClient(cfg),
+		Source:              NewSourceClient(cfg),
+		User:                NewUserClient(cfg),
+		VerificationSession: NewVerificationSessionClient(cfg),
 	}, nil
 }
 
@@ -196,6 +202,7 @@ func (c *Client) Use(hooks ...Hook) {
 	c.Publication.Use(hooks...)
 	c.Source.Use(hooks...)
 	c.User.Use(hooks...)
+	c.VerificationSession.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
@@ -205,6 +212,7 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.Publication.Intercept(interceptors...)
 	c.Source.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
+	c.VerificationSession.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -218,6 +226,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Source.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
+	case *VerificationSessionMutation:
+		return c.VerificationSession.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -826,6 +836,22 @@ func (c *UserClient) QueryPlugin(u *User) *PluginQuery {
 	return query
 }
 
+// QueryVerificationSession queries the verification_session edge of a User.
+func (c *UserClient) QueryVerificationSession(u *User) *VerificationSessionQuery {
+	query := (&VerificationSessionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(verificationsession.Table, verificationsession.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, user.VerificationSessionTable, user.VerificationSessionColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	hooks := c.hooks.User
@@ -852,12 +878,161 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 	}
 }
 
+// VerificationSessionClient is a client for the VerificationSession schema.
+type VerificationSessionClient struct {
+	config
+}
+
+// NewVerificationSessionClient returns a client for the VerificationSession from the given config.
+func NewVerificationSessionClient(c config) *VerificationSessionClient {
+	return &VerificationSessionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `verificationsession.Hooks(f(g(h())))`.
+func (c *VerificationSessionClient) Use(hooks ...Hook) {
+	c.hooks.VerificationSession = append(c.hooks.VerificationSession, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `verificationsession.Intercept(f(g(h())))`.
+func (c *VerificationSessionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.VerificationSession = append(c.inters.VerificationSession, interceptors...)
+}
+
+// Create returns a builder for creating a VerificationSession entity.
+func (c *VerificationSessionClient) Create() *VerificationSessionCreate {
+	mutation := newVerificationSessionMutation(c.config, OpCreate)
+	return &VerificationSessionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of VerificationSession entities.
+func (c *VerificationSessionClient) CreateBulk(builders ...*VerificationSessionCreate) *VerificationSessionCreateBulk {
+	return &VerificationSessionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *VerificationSessionClient) MapCreateBulk(slice any, setFunc func(*VerificationSessionCreate, int)) *VerificationSessionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &VerificationSessionCreateBulk{err: fmt.Errorf("calling to VerificationSessionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*VerificationSessionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &VerificationSessionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for VerificationSession.
+func (c *VerificationSessionClient) Update() *VerificationSessionUpdate {
+	mutation := newVerificationSessionMutation(c.config, OpUpdate)
+	return &VerificationSessionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *VerificationSessionClient) UpdateOne(vs *VerificationSession) *VerificationSessionUpdateOne {
+	mutation := newVerificationSessionMutation(c.config, OpUpdateOne, withVerificationSession(vs))
+	return &VerificationSessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *VerificationSessionClient) UpdateOneID(id string) *VerificationSessionUpdateOne {
+	mutation := newVerificationSessionMutation(c.config, OpUpdateOne, withVerificationSessionID(id))
+	return &VerificationSessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for VerificationSession.
+func (c *VerificationSessionClient) Delete() *VerificationSessionDelete {
+	mutation := newVerificationSessionMutation(c.config, OpDelete)
+	return &VerificationSessionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *VerificationSessionClient) DeleteOne(vs *VerificationSession) *VerificationSessionDeleteOne {
+	return c.DeleteOneID(vs.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *VerificationSessionClient) DeleteOneID(id string) *VerificationSessionDeleteOne {
+	builder := c.Delete().Where(verificationsession.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &VerificationSessionDeleteOne{builder}
+}
+
+// Query returns a query builder for VerificationSession.
+func (c *VerificationSessionClient) Query() *VerificationSessionQuery {
+	return &VerificationSessionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeVerificationSession},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a VerificationSession entity by its id.
+func (c *VerificationSessionClient) Get(ctx context.Context, id string) (*VerificationSession, error) {
+	return c.Query().Where(verificationsession.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *VerificationSessionClient) GetX(ctx context.Context, id string) *VerificationSession {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QuerySession queries the session edge of a VerificationSession.
+func (c *VerificationSessionClient) QuerySession(vs *VerificationSession) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := vs.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(verificationsession.Table, verificationsession.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, verificationsession.SessionTable, verificationsession.SessionColumn),
+		)
+		fromV = sqlgraph.Neighbors(vs.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *VerificationSessionClient) Hooks() []Hook {
+	return c.hooks.VerificationSession
+}
+
+// Interceptors returns the client interceptors.
+func (c *VerificationSessionClient) Interceptors() []Interceptor {
+	return c.inters.VerificationSession
+}
+
+func (c *VerificationSessionClient) mutate(ctx context.Context, m *VerificationSessionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&VerificationSessionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&VerificationSessionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&VerificationSessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&VerificationSessionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown VerificationSession mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Plugin, Publication, Source, User []ent.Hook
+		Plugin, Publication, Source, User, VerificationSession []ent.Hook
 	}
 	inters struct {
-		Plugin, Publication, Source, User []ent.Interceptor
+		Plugin, Publication, Source, User, VerificationSession []ent.Interceptor
 	}
 )

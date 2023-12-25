@@ -38,6 +38,8 @@ func (User) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("plugin", Plugin.Type).
 			Ref("owner"),
+		edge.From("verification_session", VerificationSession.Type).
+			Ref("session"),
 	}
 }
 

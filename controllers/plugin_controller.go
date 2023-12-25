@@ -7,6 +7,7 @@ import (
 	"github.com/Encedeus/pluginServer/proto"
 	protoapi "github.com/Encedeus/pluginServer/proto/go"
 	"github.com/Encedeus/pluginServer/services"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
@@ -75,14 +76,44 @@ func (PluginController) HandlePublishRelease(c echo.Context, db *ent.Client) err
 	publishReq := new(protoapi.PluginPublishReleaseRequest)
 	c.Bind(publishReq)
 
+	pluginId, err := uuid.Parse(publishReq.PluginId)
+
+	if err != nil {
+		return errors2.GetHTTPErrorResponse(c, errors2.ErrInvalidPluginId)
+	}
+
 	// check if plugin exists before calls to the GitHub api
-	plugin, err := services.GetPluginForReleasePublication(ctx, db, userId, publishReq.PluginName)
+	plugin, err := services.GetPluginWithSource(ctx, db, userId, pluginId)
 	if err != nil {
 		return errors2.GetHTTPErrorResponse(c, err)
 	}
-	// todo: remove this giant piece of sranje that is the next line
 
 	err = services.PublishRelease(ctx, db, publishReq, plugin)
+	if err != nil {
+		return errors2.GetHTTPErrorResponse(c, err)
+	}
+
+	return c.NoContent(200)
+}
+
+func (PluginController) DeprecateRelease(c echo.Context, db *ent.Client) error {
+	ctx := c.Request().Context()
+	userId, _ := middleware.IdFromAccessContext(ctx)
+
+	deprecateReq := new(protoapi.PluginDeprecateReleaseRequest)
+	c.Bind(deprecateReq)
+
+	pluginId, err := uuid.Parse(deprecateReq.PluginId)
+	if err != nil {
+		return errors2.GetHTTPErrorResponse(c, errors2.ErrInvalidPluginId)
+	}
+
+	pluginData, err := services.GetPluginWithAllEdges(ctx, db, pluginId)
+	if pluginData.Edges.Owner.ID != userId {
+		return errors2.GetHTTPErrorResponse(c, errors2.ErrUnauthorized)
+	}
+
+	err = services.DeprecateRelease(ctx, db, pluginId, deprecateReq.ReleaseName)
 	if err != nil {
 		return errors2.GetHTTPErrorResponse(c, err)
 	}

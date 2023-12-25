@@ -16,6 +16,7 @@ import (
 	"github.com/Encedeus/pluginServer/ent/publication"
 	"github.com/Encedeus/pluginServer/ent/source"
 	"github.com/Encedeus/pluginServer/ent/user"
+	"github.com/Encedeus/pluginServer/ent/verificationsession"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -76,10 +77,11 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			plugin.Table:      plugin.ValidColumn,
-			publication.Table: publication.ValidColumn,
-			source.Table:      source.ValidColumn,
-			user.Table:        user.ValidColumn,
+			plugin.Table:              plugin.ValidColumn,
+			publication.Table:         publication.ValidColumn,
+			source.Table:              source.ValidColumn,
+			user.Table:                user.ValidColumn,
+			verificationsession.Table: verificationsession.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

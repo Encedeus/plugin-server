@@ -57,6 +57,18 @@ func (f UserFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error)
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserMutation", m)
 }
 
+// The VerificationSessionFunc type is an adapter to allow the use of ordinary
+// function as VerificationSession mutator.
+type VerificationSessionFunc func(context.Context, *ent.VerificationSessionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f VerificationSessionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.VerificationSessionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.VerificationSessionMutation", m)
+}
+
 // Condition is a hook condition function.
 type Condition func(context.Context, ent.Mutation) bool
 

@@ -45,10 +45,15 @@ var (
 	ErrPluginNotFound             = NewHttpError("plugin not found", http.StatusNotFound)
 	ErrInvalidPluginName          = NewValidationError("invalid plugin name")
 	ErrReleaseTagDoesNotExist     = NewHttpError("release tag not found in plugin's source repository", http.StatusNotFound)
-	ReleaseUsernameTooLong        = NewValidationError("release name too long")
-	ReleaseUsernameTooShort       = NewValidationError("release name too short")
+	ErrReleaseUsernameTooLong     = NewValidationError("release name too long")
+	ErrReleaseUsernameTooShort    = NewValidationError("release name too short")
 	ErrMissingPluginFile          = NewValidationError("the plugin file is missing in the selected release")
-	GithubAPIError                = NewInternalError("github api failed")
+	ErrGithubApiFailed            = NewInternalError("request to github api failed")
+	ErrSessionNotFound            = NewHttpError("session not found", 404)
+	ErrEmailAlreadyVerified       = NewValidationError("email already verified")
+	ErrReleaseNameAlreadyInUse    = NewValidationError("release name already in use")
+	ErrInvalidPluginId            = NewValidationError("invalid plugin id")
+	ErrReleaseNotFound            = NewHttpError("release not found", 404)
 )
 
 func GetHTTPErrorResponse(c echo.Context, err error) error {
