@@ -184,9 +184,9 @@ func DeleteUser(ctx context.Context, db *ent.Client, userId uuid.UUID) error {
 	return nil
 }
 
-func FindOneUser(ctx context.Context, db *ent.Client, req *protoapi.UserFindOneRequest) (*protoapi.UserFindOneResponse, error) {
+func FindOneUser(ctx context.Context, db *ent.Client, userId uuid.UUID) (*protoapi.UserFindOneResponse, error) {
 	userData, err := db.User.Query().
-		Where(user.IDEQ(proto.ProtoUUIDToUUID(req.UserId))).
+		Where(user.IDEQ(userId)).
 		Select(user.FieldID, user.FieldName, user.FieldCreatedAt, user.FieldUpdatedAt).
 		First(ctx)
 	if err != nil {

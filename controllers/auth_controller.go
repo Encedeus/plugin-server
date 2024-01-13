@@ -97,7 +97,7 @@ func (AuthController) handleRegisterUser(c echo.Context, db *ent.Client) error {
 		Path:     "/",
 	})
 
-	return proto.MarshalControllerProtoResponseToJSON(&c, 200,
+	return proto.MarshalControllerProtoResponseToJSON(&c, 201,
 		&protoapi.UserAuthorizeResponse{
 			AccessToken: accessToken,
 		},

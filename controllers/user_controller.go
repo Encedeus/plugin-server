@@ -33,6 +33,10 @@ func (uc UserController) registerRoutes(srv *Server) {
 
 		userEndpoint.Use(middleware.AccessJWTAuth)
 
+		userEndpoint.GET("", func(c echo.Context) error {
+			return handleGetSelf(c, srv.DB)
+		})
+
 		userEndpoint.PUT("", func(c echo.Context) error {
 			return handleSetPfp(c, srv.DB)
 		})
@@ -51,12 +55,10 @@ func handleFindUser(c echo.Context, db *ent.Client) error {
 
 	userId, err := uuid.Parse(rawUserId)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"message": "bad request"})
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "invalid user id"})
 	}
 
-	resp, err := services.FindOneUser(ctx, db, &protoapi.UserFindOneRequest{
-		UserId: proto.UUIDToProtoUUID(userId),
-	})
+	resp, err := services.FindOneUser(ctx, db, userId)
 
 	if err != nil {
 		return errors2.GetHTTPErrorResponse(c, err)
@@ -79,11 +81,9 @@ func handleUpdateUser(c echo.Context, db *ent.Client) error {
 		return errors2.GetHTTPErrorResponse(c, err)
 	}
 
-	resp := protoapi.UserUpdateResponse{
-		User: proto.EntUserEntityToProtoUser(userData),
-	}
+	resp := proto.EntUserEntityToProtoUser(userData)
 
-	return proto.MarshalControllerProtoResponseToJSON(&c, 200, &resp)
+	return proto.MarshalControllerProtoResponseToJSON(&c, 200, resp)
 }
 
 func handleSetPfp(c echo.Context, db *ent.Client) error {
@@ -128,4 +128,16 @@ func handleDeleteUser(c echo.Context, db *ent.Client) error {
 	}
 
 	return c.NoContent(http.StatusOK)
+}
+
+func handleGetSelf(c echo.Context, db *ent.Client) error {
+	ctx := c.Request().Context()
+	userId, _ := middleware.IdFromAccessContext(ctx)
+
+	userData, err := services.GetUser(ctx, db, userId)
+	if err != nil {
+		return errors2.GetHTTPErrorResponse(c, err)
+	}
+
+	return proto.MarshalControllerProtoResponseToJSON(&c, 200, proto.EntUserEntityToProtoUser(userData))
 }

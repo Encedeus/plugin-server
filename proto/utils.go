@@ -3,7 +3,6 @@ package proto
 import (
 	"github.com/Encedeus/pluginServer/ent"
 	protoapi "github.com/Encedeus/pluginServer/proto/go"
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -12,22 +11,11 @@ import (
 	"strings"
 )
 
-func ProtoUUIDToUUID(id *protoapi.UUID) uuid.UUID {
-	return uuid.MustParse(id.Value)
-}
-
-func UUIDToProtoUUID(id uuid.UUID) *protoapi.UUID {
-	return &protoapi.UUID{
-		Value: id.String(),
-	}
-}
-
 func EntUserEntityToProtoUser(user *ent.User) *protoapi.User {
 	return &protoapi.User{
 		Id:        user.ID.String(),
 		Name:      user.Name,
 		Email:     user.Email,
-		Password:  user.Password,
 		CreatedAt: timestamppb.New(user.CreatedAt),
 		UpdatedAt: timestamppb.New(user.UpdatedAt),
 	}
@@ -64,19 +52,6 @@ func EntPluginEntityToProtoPlugin(plugin *ent.Plugin) *protoapi.Plugin {
 	}
 }
 
-func ProtoUserToEntUserEntity(user *protoapi.User) *ent.User {
-	userId, _ := uuid.Parse(user.Id)
-	return &ent.User{
-		ID:        userId,
-		CreatedAt: user.CreatedAt.AsTime(),
-		UpdatedAt: user.UpdatedAt.AsTime(),
-		DeletedAt: user.DeletedAt.AsTime(),
-		Name:      user.Name,
-		Email:     user.Email,
-		Password:  user.Password,
-	}
-}
-
 func GithubUriToProtoGithubRepo(repoURL string) *protoapi.GithubRepo {
 
 	repoURL = strings.ReplaceAll(repoURL, "www.", "")
@@ -92,7 +67,7 @@ func SimpleGithubUriToProtoGithubRepo(repoURL string) *protoapi.GithubRepo {
 	return &protoapi.GithubRepo{Username: repoPathSegments[0], RepoName: repoPathSegments[1]}
 }
 
-func MarshalControllerProtoResponseToJSON(c *echo.Context, okStatus int, message proto.Message) (err error) {
+func MarshalControllerProtoResponseToJSON(c *echo.Context, status int, message proto.Message) (err error) {
 	json, err := protojson.Marshal(message)
 	if err != nil {
 		return (*c).JSON(http.StatusInternalServerError, echo.Map{
@@ -100,5 +75,5 @@ func MarshalControllerProtoResponseToJSON(c *echo.Context, okStatus int, message
 		})
 	}
 
-	return (*c).JSONBlob(okStatus, json)
+	return (*c).JSONBlob(status, json)
 }

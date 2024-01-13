@@ -133,7 +133,7 @@ func ValidateRefreshJWT(tokenString string) (bool, TokenClaims, error) {
 	})
 
 	if err != nil {
-		return false, claims, err
+		return false, claims, errors.ErrUnauthorized
 	}
 
 	// isUpdated, err := services.IsUserUpdated(claims.UserID, claims.IssuedAt)

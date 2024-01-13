@@ -28,7 +28,7 @@ var (
 	ErrPluginNameAlreadyTaken     = NewValidationError("plugin name already taken")
 	ErrEmailAlreadyTaken          = NewValidationError("email already taken")
 	ErrUnexpectedJWTSigningMethod = NewValidationError("unexpected JWT signing method")
-	ErrUserDeleted                = errors.New("user deleted")
+	ErrUserDeleted                = NewHttpError("user deleted", 410)
 	ErrMissingAPIKey              = NewValidationError("missing API key")
 	ErrQueryFailed                = NewInternalError("db query failed")
 	ErrPassTooLong                = NewValidationError("password too long")

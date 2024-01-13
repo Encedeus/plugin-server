@@ -21,7 +21,7 @@ func GetUserUUIDAndHashByUsername(ctx context.Context, db *ent.Client, username 
 	}
 
 	if IsUserDeleted(userData) {
-		return "", nil, errors.ErrUserNotFound
+		return "", nil, errors.ErrUserDeleted
 	}
 
 	return userData.Password, &userData.ID, nil

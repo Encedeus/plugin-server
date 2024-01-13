@@ -2,17 +2,14 @@ syntax = "proto3";
 
 option go_package = "./go;protoapi";
 
-import "google/protobuf/timestamp.proto";
 
-message User {
-  string id = 1;
-  google.protobuf.Timestamp created_at = 2;
-  google.protobuf.Timestamp updated_at = 3;
-  google.protobuf.Timestamp deleted_at = 4;
-  string email = 5;
-  string password = 6;
-  string name = 7;
-  bool email_verified = 8;
+message GithubRepo {
+  string username = 1;
+  string repoName = 2;
+}
+
+message ErrorResponse {
+  string message = 1;
 }
 
 
