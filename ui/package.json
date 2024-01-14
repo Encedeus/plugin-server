@@ -21,6 +21,6 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@encedeus/registry-js-api": "^0.0.13"
+		"@encedeus/registry-js-api": "^0.0.14"
 	}
 }

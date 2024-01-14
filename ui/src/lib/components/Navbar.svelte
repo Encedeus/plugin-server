@@ -1,7 +1,14 @@
 <script lang="ts">
-    import {isAuthenticated} from "$lib/api/api";
+    import {getApi, isAuthenticated} from "$lib/api/api";
+    import {userDataStore} from "$lib/stores/userDataStore";
+
+    const api = getApi()
 
     let isAuth: boolean = isAuthenticated();
+
+    if (isAuth) await api.UsersService.GetSelf()
+
+    let pfpURL: string = api.UsersService.GetUserPfpURL($userDataStore.id)
 
 </script>
 
@@ -26,8 +33,7 @@
             <a href="./auth/login" id="signIn" class="navbarComponent">Sign In</a>
         </div>
     {:else}
-        <!-- TODO: ADD ACTUAL USERINFO-->
-        <p>user logged in</p>
+        <img src={pfpURL} alt="user profile picture">
     {/if}
 </nav>
 
