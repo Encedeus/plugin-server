@@ -1,68 +1,56 @@
 <script lang="ts">
     import {
-        UserRegisterRequest,
+        UserSignInRequest,
         validatePassword,
-        validateUsername,
-        validateEmail,
-        EncedeusRegistryApi
+        validateUserIdentifier
     } from "@encedeus/registry-js-api";
     import Input from "$lib/components/Input.svelte";
     import Checkbox from "$lib/components/Checkbox.svelte";
     import Button from "$lib/components/Button.svelte";
     import ErrorTextBox from "$lib/components/ErrorTextBox.svelte";
     import {goto} from "$app/navigation";
-    import {accessTokenStore} from "$lib/stores/accessTokenStore";
     import {getApi} from "$lib/api/api";
-
-    let username: string = "", email: string = "", password: string = "";
-    let nameError: string = "", emailError: string = "", passwordError: string = "", responseError = "";
-    let showPassword: boolean;
 
     const api = getApi()
 
-    function resetErrors() {
-        nameError = "";
-        emailError = "";
+    let password: string = "", userIdentifier: string = "";
+    let passwordError: string = "", userIdentifierError: string = "", responseError = "";
+    let showPassword: boolean;
+
+    async function handleLogin() {
+
         passwordError = "";
+        userIdentifierError = "";
         responseError = "";
-    }
 
-    async function handleSignUp() {
-
-        resetErrors();
-
-        const nameErr = validateUsername(username);
-        const emailErr = validateEmail(email);
         const passErr = validatePassword(password);
+        const uidErr = validateUserIdentifier(userIdentifier);
 
-        if (nameErr) {
-            nameError = nameErr.message;
-        }
-        if (emailErr) {
-            emailError = emailErr.message;
-        }
         if (passErr) {
             passwordError = passErr.message;
         }
+        if (uidErr) {
+            userIdentifierError = uidErr.message;
+        }
 
-        if (nameErr || emailErr || passErr) {
+        if (passErr || uidErr) {
             return;
         }
 
-        const request: UserRegisterRequest = {
-            name: username,
-            email: email,
+        const request: UserSignInRequest = {
+            uid: userIdentifier,
             password: password
         };
 
-        const response = await api.AuthService.SignUp(request);
+        const response = await api.AuthService.SignIn(request);
 
         if (response.error) {
             responseError = response.error.message;
             return;
         }
 
-        goto("/");
+        //api.AccessToken = <string>response.response?.accessToken
+        goto("/")
     }
 
     export function handleShowHidePassword() {
@@ -73,12 +61,8 @@
 
 <div id="page">
 
-    <Input type="text" placeholder="name" bind:value={username}
-           bind:helperText={nameError}/>
-
-    <Input type="email" placeholder="email" bind:value={email}
-           bind:helperText={emailError}/>
-
+    <Input type="text" placeholder="username / email" bind:value={userIdentifier}
+           bind:helperText={userIdentifierError}/>
     <Input type={showPassword ? "text" : "password"} placeholder="password" bind:value={password}
            bind:helperText={passwordError}/>
 
@@ -90,7 +74,7 @@
 
     <ErrorTextBox bind:value={responseError}/>
 
-    <Button onclick={handleSignUp}>Sign Up</Button>
+    <Button onclick={handleLogin}>Login</Button>
 </div>
 
 <style>

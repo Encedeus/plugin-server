@@ -56,6 +56,12 @@ func (pc *PublicationCreate) SetName(s string) *PublicationCreate {
 	return pc
 }
 
+// SetTag sets the "tag" field.
+func (pc *PublicationCreate) SetTag(s string) *PublicationCreate {
+	pc.mutation.SetTag(s)
+	return pc
+}
+
 // SetURIToFile sets the "uri_to_file" field.
 func (pc *PublicationCreate) SetURIToFile(s string) *PublicationCreate {
 	pc.mutation.SetURIToFile(s)
@@ -134,6 +140,9 @@ func (pc *PublicationCreate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Publication.name": %w`, err)}
 		}
 	}
+	if _, ok := pc.mutation.Tag(); !ok {
+		return &ValidationError{Name: "tag", err: errors.New(`ent: missing required field "Publication.tag"`)}
+	}
 	if _, ok := pc.mutation.URIToFile(); !ok {
 		return &ValidationError{Name: "uri_to_file", err: errors.New(`ent: missing required field "Publication.uri_to_file"`)}
 	}
@@ -180,6 +189,10 @@ func (pc *PublicationCreate) createSpec() (*Publication, *sqlgraph.CreateSpec) {
 	if value, ok := pc.mutation.Name(); ok {
 		_spec.SetField(publication.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if value, ok := pc.mutation.Tag(); ok {
+		_spec.SetField(publication.FieldTag, field.TypeString, value)
+		_node.Tag = value
 	}
 	if value, ok := pc.mutation.URIToFile(); ok {
 		_spec.SetField(publication.FieldURIToFile, field.TypeString, value)

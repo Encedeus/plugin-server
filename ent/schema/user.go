@@ -36,8 +36,7 @@ func (User) Fields() []ent.Field {
 
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("plugin", Plugin.Type).
-			Ref("owner"),
+		edge.To("plugins", Plugin.Type),
 		edge.From("verification_session", VerificationSession.Type).
 			Ref("session"),
 	}

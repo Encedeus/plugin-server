@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -46,6 +47,20 @@ func (pu *PluginUpdate) SetOwnerID(u uuid.UUID) *PluginUpdate {
 // SetSourceID sets the "source_id" field.
 func (pu *PluginUpdate) SetSourceID(i int) *PluginUpdate {
 	pu.mutation.SetSourceID(i)
+	return pu
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (pu *PluginUpdate) SetCreatedAt(t time.Time) *PluginUpdate {
+	pu.mutation.SetCreatedAt(t)
+	return pu
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (pu *PluginUpdate) SetNillableCreatedAt(t *time.Time) *PluginUpdate {
+	if t != nil {
+		pu.SetCreatedAt(*t)
+	}
 	return pu
 }
 
@@ -165,10 +180,13 @@ func (pu *PluginUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := pu.mutation.Name(); ok {
 		_spec.SetField(plugin.FieldName, field.TypeString, value)
 	}
+	if value, ok := pu.mutation.CreatedAt(); ok {
+		_spec.SetField(plugin.FieldCreatedAt, field.TypeTime, value)
+	}
 	if pu.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   plugin.OwnerTable,
 			Columns: []string{plugin.OwnerColumn},
 			Bidi:    false,
@@ -181,7 +199,7 @@ func (pu *PluginUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := pu.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   plugin.OwnerTable,
 			Columns: []string{plugin.OwnerColumn},
 			Bidi:    false,
@@ -303,6 +321,20 @@ func (puo *PluginUpdateOne) SetOwnerID(u uuid.UUID) *PluginUpdateOne {
 // SetSourceID sets the "source_id" field.
 func (puo *PluginUpdateOne) SetSourceID(i int) *PluginUpdateOne {
 	puo.mutation.SetSourceID(i)
+	return puo
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (puo *PluginUpdateOne) SetCreatedAt(t time.Time) *PluginUpdateOne {
+	puo.mutation.SetCreatedAt(t)
+	return puo
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (puo *PluginUpdateOne) SetNillableCreatedAt(t *time.Time) *PluginUpdateOne {
+	if t != nil {
+		puo.SetCreatedAt(*t)
+	}
 	return puo
 }
 
@@ -452,10 +484,13 @@ func (puo *PluginUpdateOne) sqlSave(ctx context.Context) (_node *Plugin, err err
 	if value, ok := puo.mutation.Name(); ok {
 		_spec.SetField(plugin.FieldName, field.TypeString, value)
 	}
+	if value, ok := puo.mutation.CreatedAt(); ok {
+		_spec.SetField(plugin.FieldCreatedAt, field.TypeTime, value)
+	}
 	if puo.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   plugin.OwnerTable,
 			Columns: []string{plugin.OwnerColumn},
 			Bidi:    false,
@@ -468,7 +503,7 @@ func (puo *PluginUpdateOne) sqlSave(ctx context.Context) (_node *Plugin, err err
 	if nodes := puo.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   plugin.OwnerTable,
 			Columns: []string{plugin.OwnerColumn},
 			Bidi:    false,

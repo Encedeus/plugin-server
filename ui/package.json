@@ -21,6 +21,8 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@encedeus/registry-js-api": "^0.0.14"
+		"@encedeus/registry-js-api": "^0.0.31",
+		"jsonwebtoken": "^9.0.2",
+		"marked": "^11.1.1"
 	}
 }

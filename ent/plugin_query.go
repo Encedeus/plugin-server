@@ -79,7 +79,7 @@ func (pq *PluginQuery) QueryOwner() *UserQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(plugin.Table, plugin.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, plugin.OwnerTable, plugin.OwnerColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, plugin.OwnerTable, plugin.OwnerColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
 		return fromU, nil

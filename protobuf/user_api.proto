@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
+import "plugin_api.proto";
 
 option go_package = "./go;protoapi";
 
@@ -13,6 +14,8 @@ message User {
   string email = 4;
   string name = 5;
   bool email_verified = 6;
+
+  repeated Plugin plugins = 7;
 }
 
 message UserUpdateRequest {

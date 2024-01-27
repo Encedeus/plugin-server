@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 	"github.com/Encedeus/pluginServer/services"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -43,9 +42,6 @@ func AccessJWTAuth(next echo.HandlerFunc) echo.HandlerFunc {
 		isOk, err := services.CanUserBeAuthorized(ctx, accessToken)
 
 		if err != nil || !isValid || !isOk {
-
-			fmt.Println(err, isValid, isOk)
-
 			return c.JSON(401, echo.Map{
 				"message": "unauthorized",
 			})

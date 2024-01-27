@@ -54,6 +54,12 @@ var (
 	ErrReleaseNameAlreadyInUse    = NewValidationError("release name already in use")
 	ErrInvalidPluginId            = NewValidationError("invalid plugin id")
 	ErrReleaseNotFound            = NewHttpError("release not found", 404)
+	ErrPluginHasNoReleases        = NewHttpError("plugin has no releases", 404)
+	ErrRepoGone                   = NewHttpError("github repository no longer available", 410)
+	ErrNoReadme                   = NewHttpError("github repository has no README.md", 410)
+	ErrInvalidPageNumber          = NewValidationError("invalid page number")
+	ErrNoPluginsMatchSearch       = NewHttpError("no matches found", 404)
+	ErrNoRefreshToken             = NewHttpError("no refresh token provided", 401)
 )
 
 func GetHTTPErrorResponse(c echo.Context, err error) error {

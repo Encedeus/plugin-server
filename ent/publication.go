@@ -25,6 +25,8 @@ type Publication struct {
 	IsDeprecated bool `json:"is_deprecated,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
+	// Tag holds the value of the "tag" field.
+	Tag string `json:"tag,omitempty"`
 	// URIToFile holds the value of the "uri_to_file" field.
 	URIToFile string `json:"uri_to_file,omitempty"`
 	// PluginID holds the value of the "plugin_id" field.
@@ -66,7 +68,7 @@ func (*Publication) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case publication.FieldID:
 			values[i] = new(sql.NullInt64)
-		case publication.FieldName, publication.FieldURIToFile:
+		case publication.FieldName, publication.FieldTag, publication.FieldURIToFile:
 			values[i] = new(sql.NullString)
 		case publication.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -110,6 +112,12 @@ func (pu *Publication) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				pu.Name = value.String
+			}
+		case publication.FieldTag:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field tag", values[i])
+			} else if value.Valid {
+				pu.Tag = value.String
 			}
 		case publication.FieldURIToFile:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -172,6 +180,9 @@ func (pu *Publication) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(pu.Name)
+	builder.WriteString(", ")
+	builder.WriteString("tag=")
+	builder.WriteString(pu.Tag)
 	builder.WriteString(", ")
 	builder.WriteString("uri_to_file=")
 	builder.WriteString(pu.URIToFile)

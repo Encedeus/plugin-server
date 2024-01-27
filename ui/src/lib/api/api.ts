@@ -3,26 +3,28 @@ import {EncedeusRegistryApi, type User} from "@encedeus/registry-js-api";
 import {accessTokenStore} from "$lib/stores/accessTokenStore";
 import {userDataStore} from "$lib/stores/userDataStore";
 
-function onAuth(accessToken: string) {
+function onAuthUpdate(accessToken: string) {
     accessTokenStore.set(accessToken);
+    getApi().UsersService.GetSelf().catch(err => err.response);
 }
 
-function onUser(user: User) {
+function onUserUpdate(user: User) {
     userDataStore.set(user);
 }
 
-export function getApi(): EncedeusRegistryApi {
+export function getApi(noCallbacks: boolean = false, refreshCookie: string | undefined = undefined): EncedeusRegistryApi {
     return new EncedeusRegistryApi("http://localhost:3001", get(accessTokenStore), {
-        axiosConfig: {},
+        axiosConfig: {
+            withCredentials: true,
+            headers: refreshCookie ? {Cookie: `encedeus_plugins_refreshToken=${refreshCookie};`} : {}
+        },
         callbacks: {
-            onAuth,
-            onUser
+            onAuth: noCallbacks ? () => {} : onAuthUpdate,
+            onUser: noCallbacks ? () => {} : onUserUpdate
         }
     });
 }
 
 export function isAuthenticated(): boolean {
-    console.log(get(accessTokenStore).length)
-    console.log(get(accessTokenStore).length > 0)
     return get(accessTokenStore).length > 0;
 }

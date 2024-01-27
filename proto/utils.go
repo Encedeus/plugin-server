@@ -18,15 +18,17 @@ func EntUserEntityToProtoUser(user *ent.User) *protoapi.User {
 		Email:     user.Email,
 		CreatedAt: timestamppb.New(user.CreatedAt),
 		UpdatedAt: timestamppb.New(user.UpdatedAt),
+		Plugins:   EntPluginEntitiesToProtoPlugin(user.Edges.Plugins),
 	}
 }
 
 func EntPublicationEntityToProtoRelease(publication *ent.Publication) *protoapi.Release {
 	return &protoapi.Release{
-		Name:         publication.Name,
-		PublishedAt:  timestamppb.New(publication.CreatedAt),
-		IsDeprecated: publication.IsDeprecated,
-		DownloadURI:  publication.URIToFile,
+		Name:             publication.Name,
+		PublishedAt:      timestamppb.New(publication.CreatedAt),
+		IsDeprecated:     publication.IsDeprecated,
+		DownloadURI:      publication.URIToFile,
+		GithubReleaseTag: publication.Tag,
 	}
 }
 
@@ -50,6 +52,15 @@ func EntPluginEntityToProtoPlugin(plugin *ent.Plugin) *protoapi.Plugin {
 		},
 		Releases: EntPublicationsEntityToProtoReleases(plugin.Edges.Publications),
 	}
+}
+func EntPluginEntitiesToProtoPlugin(plugins []*ent.Plugin) []*protoapi.Plugin {
+	var protoPlugins []*protoapi.Plugin
+
+	for _, plugin := range plugins {
+		protoPlugins = append(protoPlugins, EntPluginEntityToProtoPlugin(plugin))
+	}
+
+	return protoPlugins
 }
 
 func GithubUriToProtoGithubRepo(repoURL string) *protoapi.GithubRepo {

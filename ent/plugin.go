@@ -5,6 +5,7 @@ package ent
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -25,6 +26,8 @@ type Plugin struct {
 	OwnerID uuid.UUID `json:"owner_id,omitempty"`
 	// SourceID holds the value of the "source_id" field.
 	SourceID int `json:"source_id,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the PluginQuery when eager-loading is set.
 	Edges        PluginEdges `json:"edges"`
@@ -88,6 +91,8 @@ func (*Plugin) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case plugin.FieldName:
 			values[i] = new(sql.NullString)
+		case plugin.FieldCreatedAt:
+			values[i] = new(sql.NullTime)
 		case plugin.FieldID, plugin.FieldOwnerID:
 			values[i] = new(uuid.UUID)
 		default:
@@ -128,6 +133,12 @@ func (pl *Plugin) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field source_id", values[i])
 			} else if value.Valid {
 				pl.SourceID = int(value.Int64)
+			}
+		case plugin.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+			} else if value.Valid {
+				pl.CreatedAt = value.Time
 			}
 		default:
 			pl.selectValues.Set(columns[i], values[i])
@@ -188,6 +199,9 @@ func (pl *Plugin) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("source_id=")
 	builder.WriteString(fmt.Sprintf("%v", pl.SourceID))
+	builder.WriteString(", ")
+	builder.WriteString("created_at=")
+	builder.WriteString(pl.CreatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

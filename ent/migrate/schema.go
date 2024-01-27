@@ -12,8 +12,9 @@ var (
 	PluginsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "name", Type: field.TypeString, Unique: true},
-		{Name: "owner_id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
 		{Name: "source_id", Type: field.TypeInt},
+		{Name: "owner_id", Type: field.TypeUUID},
 	}
 	// PluginsTable holds the schema information for the "plugins" table.
 	PluginsTable = &schema.Table{
@@ -22,15 +23,15 @@ var (
 		PrimaryKey: []*schema.Column{PluginsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "plugins_users_owner",
-				Columns:    []*schema.Column{PluginsColumns[2]},
-				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.NoAction,
-			},
-			{
 				Symbol:     "plugins_sources_source",
 				Columns:    []*schema.Column{PluginsColumns[3]},
 				RefColumns: []*schema.Column{SourcesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "plugins_users_plugins",
+				Columns:    []*schema.Column{PluginsColumns[4]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 		},
@@ -41,6 +42,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "is_deprecated", Type: field.TypeBool, Default: false},
 		{Name: "name", Type: field.TypeString, Size: 32},
+		{Name: "tag", Type: field.TypeString},
 		{Name: "uri_to_file", Type: field.TypeString},
 		{Name: "plugin_id", Type: field.TypeUUID},
 	}
@@ -52,7 +54,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "publications_plugins_publications",
-				Columns:    []*schema.Column{PublicationsColumns[5]},
+				Columns:    []*schema.Column{PublicationsColumns[6]},
 				RefColumns: []*schema.Column{PluginsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -117,8 +119,8 @@ var (
 )
 
 func init() {
-	PluginsTable.ForeignKeys[0].RefTable = UsersTable
-	PluginsTable.ForeignKeys[1].RefTable = SourcesTable
+	PluginsTable.ForeignKeys[0].RefTable = SourcesTable
+	PluginsTable.ForeignKeys[1].RefTable = UsersTable
 	PublicationsTable.ForeignKeys[0].RefTable = PluginsTable
 	VerificationSessionsTable.ForeignKeys[0].RefTable = UsersTable
 }

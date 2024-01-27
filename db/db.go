@@ -37,6 +37,10 @@ func InitDB() *ent.Client {
 		migrate.WithDropColumn(true),
 	)
 
+	db.Intercept(
+		PublicationOrderIntercept(),
+	)
+
 	// update Db schema
 	if err != nil {
 		log.Fatalf("failed creating schema resources: %v", err)

@@ -25,7 +25,7 @@ func (uc UserController) registerRoutes(srv *Server) {
 	{
 		userEndpoint.Static("/pfp", config.Config.Storage.Directory)
 
-		userEndpoint.GET("/:id", func(c echo.Context) error {
+		userEndpoint.GET("/:uid", func(c echo.Context) error {
 			return handleFindUser(c, srv.DB)
 		})
 
@@ -51,14 +51,20 @@ func (uc UserController) registerRoutes(srv *Server) {
 
 func handleFindUser(c echo.Context, db *ent.Client) error {
 	ctx := c.Request().Context()
-	rawUserId := c.Param("id")
+	rawUserIdentifier := c.Param("uid")
+	isVerbose := c.QueryParam("verbose")
 
-	userId, err := uuid.Parse(rawUserId)
+	userId, err := uuid.Parse(rawUserIdentifier)
+
+	var resp *protoapi.User
+
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"message": "invalid user id"})
+		// find user by name
+		resp, err = services.FindOneUserByName(ctx, db, rawUserIdentifier, isVerbose == "1")
+	} else {
+		// find user by id
+		resp, err = services.FindOneUserById(ctx, db, userId, isVerbose == "1")
 	}
-
-	resp, err := services.FindOneUser(ctx, db, userId)
 
 	if err != nil {
 		return errors2.GetHTTPErrorResponse(c, err)

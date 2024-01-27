@@ -1,41 +1,150 @@
 <script lang="ts">
     import {getApi, isAuthenticated} from "$lib/api/api";
     import {userDataStore} from "$lib/stores/userDataStore";
+    import {onMount} from 'svelte';
+    import {GetUserPageURL} from "$lib/service/userService";
+    import {PluginSearchByNameRequest} from "@encedeus/registry-js-api/src/proto/plugin_api";
+    import {Plugin} from "@encedeus/registry-js-api";
+    import PluginInfo from "$lib/components/plugin/BasicPluginInfo.svelte";
+    import {navigating, page} from "$app/stores";
+    import {goto} from "$app/navigation";
 
-    const api = getApi()
+    const api = getApi();
 
-    let isAuth: boolean = isAuthenticated();
+    let isAuth: boolean,
+        pfpURL: string,
+        userPageURL: string,
+        inputInFocus: boolean = false,
+        searchValue: string = "",
+        plugins: Plugin[] = [],
+        mouseOverSuggestions: boolean = false;
 
-    if (isAuth) await api.UsersService.GetSelf()
+    async function loadData() {
 
-    let pfpURL: string = api.UsersService.GetUserPfpURL($userDataStore.id)
 
+        const isAuthEstablished = isAuthenticated();
+
+        if (isAuthEstablished == isAuth) {
+            return
+        }
+
+        isAuth = isAuthEstablished
+
+        if (isAuth) {
+            if (!$userDataStore) {
+                await api.UsersService.GetSelf();
+            }
+            pfpURL = api.UsersService.GetUserPfpURL($userDataStore);
+            userPageURL = GetUserPageURL($userDataStore);
+        }
+    }
+
+    function onInputFocus() {
+        inputInFocus = true;
+    }
+
+    function onInputFocusOut() {
+        inputInFocus = false;
+    }
+
+    function onMouseEnterSuggestionBox() {
+        mouseOverSuggestions = true;
+    }
+
+    function OnMouseLeaveSuggestionBox() {
+        mouseOverSuggestions = false;
+    }
+
+    async function getSearchSuggestions() {
+        const req = {
+            name: searchValue,
+            limit: 5
+        } as PluginSearchByNameRequest;
+
+        // reset suggestions in 20 ms
+        const timeout = setTimeout(() => {
+            plugins = [];
+        }, 20);
+
+        const res = await api.PluginService.SearchPlugins(req);
+
+        // cancel suggestion reset if request resolved in less the 20 ms
+        clearTimeout(timeout);
+
+        if (res.error) {
+            plugins = [];
+            return;
+        }
+
+        plugins = res.response?.plugins!;
+    }
+
+    function handleInputSubmit(event: KeyboardEvent) {
+        if (event.key != "Enter") {
+            return;
+        }
+
+        goto(`/search/?q=${searchValue}`, {invalidateAll: true});
+    }
+
+    onMount(loadData);
+    $: $userDataStore, $page.url.pathname && loadData();
 </script>
 
-<nav>
-    <a href="/">
-        <img id="logo" src="logo.png" alt="Encedeus logo">
-    </a>
-
-
-    <input id="searchBar" class="navbarComponent" type="search" placeholder="Search plugins">
-
-    <div>
-        <a href="./documentation">
-            <button id="docs" class="navbarComponent">Documentation</button>
+<header>
+    <nav>
+        <a href="/">
+            <img id="logo" src="/logo.png" alt="Encedeus logo">
         </a>
-    </div>
 
-    {#if !isAuth}
-        <div id="authAnchors">
-            <a href="./auth/signup" id="signUp" class="navbarComponent">Sign Up</a>
+        <div class="navbarComponent" id="searchBarContainer">
+            <input on:focusin={onInputFocus}
+                   on:focusout={onInputFocusOut}
+                   on:keyup={() =>{onInputFocus(); getSearchSuggestions()}}
+                   on:keyup={handleInputSubmit}
+                   bind:value={searchValue}
+                   type="search" id="searchBar"
+                   class="navbarComponent"
+                   placeholder="Search plugins"
+            />
 
-            <a href="./auth/login" id="signIn" class="navbarComponent">Sign In</a>
+            <div on:mouseenter={onMouseEnterSuggestionBox}
+                 on:mouseleave={OnMouseLeaveSuggestionBox}
+                 class:invisible={!(inputInFocus || mouseOverSuggestions)}
+                 class="suggestions"
+                 id="searchSuggestions"
+            >
+
+                {#if plugins.length > 0}
+                    {#each plugins as plugin}
+                        <PluginInfo plugin={plugin} label="name"/>
+                    {/each}
+                {:else}
+                    <p>...</p>
+                {/if}
+            </div>
         </div>
-    {:else}
-        <img src={pfpURL} alt="user profile picture">
-    {/if}
-</nav>
+
+        <div>
+            <a href="/documentation">
+                <button id="docs" class="navbarComponent">Documentation</button>
+            </a>
+        </div>
+
+        {#if !isAuth}
+            <div id="authAnchors">
+                <a href="/auth/signup" id="signUp" class="navbarComponent">Sign Up</a>
+
+                <a href="/auth/login" id="signIn" class="navbarComponent">Sign In</a>
+            </div>
+        {:else}
+            <!-- todo: implement lazy loading -->
+            <a href={userPageURL}> <img id="pfp" class="navbarComponent" src={pfpURL}> </a>
+        {/if}
+    </nav>
+
+
+</header>
 
 <style>
     nav {
@@ -68,9 +177,15 @@
         gap: inherit;
     }
 
-    #searchBar {
+    #searchBarContainer {
         min-width: 20%;
         width: 50%;
+        border: 0;
+        padding: 0;
+    }
+
+    #searchBar {
+        width: 100%;
         border: 0;
         padding: 0;
     }
@@ -98,4 +213,17 @@
         height: 45px;
     }
 
+    #pfp {
+        border-radius: 5px;
+    }
+
+    .invisible {
+        display: none;
+    }
+
+    .suggestions {
+        position: relative;
+        background-color: darkgray;
+        height: max-content;
+    }
 </style>

@@ -2,9 +2,11 @@ package services
 
 import (
 	"context"
-	"fmt"
+	"entgo.io/ent/dialect/sql"
 	db2 "github.com/Encedeus/pluginServer/db"
 	"github.com/Encedeus/pluginServer/ent"
+	"github.com/Encedeus/pluginServer/ent/plugin"
+	"github.com/Encedeus/pluginServer/ent/publication"
 	"github.com/Encedeus/pluginServer/ent/user"
 	"github.com/Encedeus/pluginServer/errors"
 	"github.com/Encedeus/pluginServer/hashing"
@@ -61,8 +63,6 @@ func updateUserUsername(ctx context.Context, user ent.User, username string) err
 	if err != nil {
 		return err
 	}
-
-	fmt.Println(user.Name, username)
 
 	if user.Name == username {
 		return errors.ErrNewUsernameEqualsOld
@@ -184,11 +184,32 @@ func DeleteUser(ctx context.Context, db *ent.Client, userId uuid.UUID) error {
 	return nil
 }
 
-func FindOneUser(ctx context.Context, db *ent.Client, userId uuid.UUID) (*protoapi.UserFindOneResponse, error) {
+func FindOneUserById(ctx context.Context, db *ent.Client, userId uuid.UUID, allReleases bool) (*protoapi.User, error) {
 	userData, err := db.User.Query().
 		Where(user.IDEQ(userId)).
 		Select(user.FieldID, user.FieldName, user.FieldCreatedAt, user.FieldUpdatedAt).
+		WithPlugins(func(pluginQuery *ent.PluginQuery) {
+			pluginQuery.Order(plugin.ByCreatedAt(sql.OrderDesc()))
+			if !allReleases {
+				pluginQuery.
+					WithSource().
+					WithPublications(func(publicationQuery *ent.PublicationQuery) {
+						publicationQuery.
+							Limit(1).
+							Where(publication.IsDeprecated(false)).
+							Order(publication.ByCreatedAt(sql.OrderDesc())).
+							Select(publication.FieldName, publication.FieldCreatedAt)
+					}).WithOwner()
+			} else {
+				pluginQuery.
+					WithSource().
+					WithPublications(func(publicationQuery *ent.PublicationQuery) {
+						publicationQuery.Order(publication.ByCreatedAt(sql.OrderDesc()))
+					}).WithOwner()
+			}
+		}).
 		First(ctx)
+
 	if err != nil {
 		if ent.IsNotFound(err) {
 			return nil, errors.ErrUserNotFound
@@ -201,17 +222,76 @@ func FindOneUser(ctx context.Context, db *ent.Client, userId uuid.UUID) (*protoa
 		return nil, errors.ErrUserDeleted
 	}
 
-	resp := &protoapi.UserFindOneResponse{
-		User: proto.EntUserEntityToProtoUser(userData),
-	}
-
-	return resp, nil
+	return (proto.EntUserEntityToProtoUser(userData)), nil
 }
 
-// GetUser is not to be used to fulfil requests, rather use FindOneUser
-func GetUser(ctx context.Context, db *ent.Client, userId uuid.UUID) (*ent.User, error) {
+func FindOneUserByName(ctx context.Context, db *ent.Client, name string, allReleases bool) (*protoapi.User, error) {
+	userData, err := db.User.Query().
+		Where(user.Name(name)).
+		Select(user.FieldID, user.FieldName, user.FieldCreatedAt, user.FieldUpdatedAt).
+		WithPlugins(func(pluginQuery *ent.PluginQuery) {
+			pluginQuery.Order(plugin.ByCreatedAt(sql.OrderDesc()))
+			if !allReleases {
+				pluginQuery.
+					WithSource().
+					WithPublications(func(publicationQuery *ent.PublicationQuery) {
+						publicationQuery.
+							Limit(1).
+							Where(publication.IsDeprecated(false)).
+							Order(publication.ByCreatedAt(sql.OrderDesc())).
+							Select(publication.FieldName, publication.FieldCreatedAt)
+					}).
+					WithOwner()
+			} else {
+				pluginQuery.
+					WithSource().
+					WithPublications(func(publicationQuery *ent.PublicationQuery) {
+						publicationQuery.Order(publication.ByCreatedAt(sql.OrderDesc()))
+					}).
+					WithOwner()
+			}
+		}).
+		First(ctx)
+
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, errors.ErrUserNotFound
+		}
+
+		return nil, errors.ErrQueryFailed
+	}
+
+	if IsUserDeleted(userData) {
+		return nil, errors.ErrUserDeleted
+	}
+
+	return (proto.EntUserEntityToProtoUser(userData)), nil
+}
+
+// GetUser is not to be used to fulfil requests, rather use FindOneUserById
+func GetUser(ctx context.Context, db *ent.Client, userId uuid.UUID, allReleasesOptional ...bool) (*ent.User, error) {
 	userData, err := db.User.Query().
 		Where(user.IDEQ(userId)).
+		Select(user.FieldID, user.FieldName, user.FieldCreatedAt, user.FieldUpdatedAt, user.FieldEmail).
+		WithPlugins(func(pluginQuery *ent.PluginQuery) {
+			if len(allReleasesOptional) > 0 && !allReleasesOptional[0] {
+				pluginQuery.
+					WithSource().
+					WithPublications(func(publicationQuery *ent.PublicationQuery) {
+						publicationQuery.
+							Limit(1).
+							Where(publication.IsDeprecated(false)).
+							Order(publication.ByCreatedAt(sql.OrderDesc())).
+							Select(publication.FieldName, publication.FieldCreatedAt)
+					})
+			} else {
+				pluginQuery.
+					WithSource().
+					WithPublications(func(publicationQuery *ent.PublicationQuery) {
+						publicationQuery.Order(publication.ByCreatedAt(sql.OrderDesc()))
+					}).WithOwner()
+			}
+		}).
 		First(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -257,9 +337,10 @@ func IsUserDeleted(userData *ent.User) bool {
 func CanUserBeAuthorized(ctx context.Context, tokenData TokenClaims) (bool, error) {
 	db := db2.GetDb()
 
-	userData, err := db.User.Get(ctx, tokenData.UserId)
+	userData, err := db.User.Query().Where(user.ID(tokenData.UserId)).First(ctx)
 
 	if err != nil {
+		log.Error(err)
 		return false, errors.ErrQueryFailed
 	}
 

@@ -28,7 +28,6 @@ func IsPluginName(pluginName string) error {
 }
 
 func IsReleaseName(username string) error {
-
 	if len(username) > config.Config.Validation.MaxReleaseNameLen {
 		return errors.ErrReleaseUsernameTooLong
 	}

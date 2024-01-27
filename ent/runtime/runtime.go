@@ -19,6 +19,10 @@ import (
 func init() {
 	pluginFields := schema.Plugin{}.Fields()
 	_ = pluginFields
+	// pluginDescCreatedAt is the schema descriptor for created_at field.
+	pluginDescCreatedAt := pluginFields[4].Descriptor()
+	// plugin.DefaultCreatedAt holds the default value on creation for the created_at field.
+	plugin.DefaultCreatedAt = pluginDescCreatedAt.Default.(func() time.Time)
 	// pluginDescID is the schema descriptor for id field.
 	pluginDescID := pluginFields[0].Descriptor()
 	// plugin.DefaultID holds the default value on creation for the id field.

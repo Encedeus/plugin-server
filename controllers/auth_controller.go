@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"github.com/Encedeus/pluginServer/email"
 	"github.com/Encedeus/pluginServer/ent"
 	errors2 "github.com/Encedeus/pluginServer/errors"
@@ -50,6 +49,7 @@ func (ac AuthController) registerRoutes(srv *Server) {
 		authEndpoint.GET("/refresh", func(c echo.Context) error {
 			return ac.handleRefreshToken(c, srv.DB)
 		})
+
 		authEndpoint.DELETE("/signout", func(c echo.Context) error {
 			return ac.handleSignOut(c, srv.DB)
 		})
@@ -117,8 +117,6 @@ func (AuthController) handleUserSignIn(c echo.Context, db *ent.Client) error {
 
 	// check which method was used for log in
 
-	fmt.Println(signInReq.Uid, signInReq.Password)
-
 	if _, err2 := mail.ParseAddress(signInReq.Uid); err2 == nil {
 		passwordHash, userId, err = services.GetUserAuthDataAndHashByEmail(ctx, db, signInReq.Uid)
 	} else if strings.TrimSpace(signInReq.Uid) != "" {
@@ -153,6 +151,16 @@ func (AuthController) handleUserSignIn(c echo.Context, db *ent.Client) error {
 		Path:     "/",
 	})
 
+	c.SetCookie(&http.Cookie{
+		Name:     "encedeus_plugins_accessToken",
+		Value:    accessToken,
+		Secure:   true,
+		Expires:  time.Now().Add(services.AccessTokenExpireTime),
+		SameSite: http.SameSiteStrictMode,
+		HttpOnly: true,
+		Path:     "/",
+	})
+
 	return proto.MarshalControllerProtoResponseToJSON(&c, 200,
 		&protoapi.UserAuthorizeResponse{
 			AccessToken: accessToken,
@@ -161,13 +169,10 @@ func (AuthController) handleUserSignIn(c echo.Context, db *ent.Client) error {
 }
 
 func (AuthController) handleRefreshToken(c echo.Context, _ *ent.Client) error {
-	// error safe because of the RefreshJWTAuth middleware
-	token, _ := services.GetRefreshTokenFromCookie(c)
-	_, tokenData, _ := services.ValidateRefreshJWT(token)
+	ctx := c.Request().Context()
 
-	userId, _ := uuid.Parse(tokenData.ID)
+	userId, _ := middleware.IdFromRefreshContext(ctx)
 
-	// generate access token
 	accessToken, _ := services.GenerateAccessToken(userId)
 
 	return proto.MarshalControllerProtoResponseToJSON(&c, 200,
@@ -184,6 +189,15 @@ func (AuthController) handleSignOut(c echo.Context, _ *ent.Client) error {
 		SameSite: http.SameSiteStrictMode,
 		Expires:  time.UnixMilli(0),
 		Secure:   true,
+		Path:     "/",
+	})
+
+	c.SetCookie(&http.Cookie{
+		Name:     "encedeus_plugins_accessToken",
+		Secure:   true,
+		Expires:  time.UnixMilli(0),
+		SameSite: http.SameSiteStrictMode,
+		HttpOnly: true,
 		Path:     "/",
 	})
 

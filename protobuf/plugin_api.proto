@@ -8,9 +8,10 @@ message Source {
 
 message Release {
   string name = 1;
-  google.protobuf.Timestamp publishedAt = 2;
-  bool isDeprecated = 3;
-  string DownloadURI = 4;
+  string githubReleaseTag = 2;
+  google.protobuf.Timestamp publishedAt = 3;
+  bool isDeprecated = 4;
+  string DownloadURI = 5;
 }
 
 message PluginCreateRequest {
@@ -35,4 +36,25 @@ message PluginPublishReleaseRequest {
 message PluginDeprecateReleaseRequest {
   string pluginId = 1;
   string releaseName = 2;
+}
+
+message PluginGetReadmeRequest {
+  string pluginId = 1;
+}
+
+message PluginGetReadmeResponse {
+  string readme = 1;
+}
+
+message PluginSearchByNameResponse {
+  repeated Plugin plugins = 1;
+  int32 pages = 2;
+  int32 page = 3;
+}
+
+message PluginSearchByNameRequest {
+  string name = 1;
+  int32 page = 2;
+  int32 pluginsPerPage = 3;
+  int32 limit = 4;
 }

@@ -64,6 +64,12 @@ func (pu *PublicationUpdate) SetName(s string) *PublicationUpdate {
 	return pu
 }
 
+// SetTag sets the "tag" field.
+func (pu *PublicationUpdate) SetTag(s string) *PublicationUpdate {
+	pu.mutation.SetTag(s)
+	return pu
+}
+
 // SetURIToFile sets the "uri_to_file" field.
 func (pu *PublicationUpdate) SetURIToFile(s string) *PublicationUpdate {
 	pu.mutation.SetURIToFile(s)
@@ -153,6 +159,9 @@ func (pu *PublicationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := pu.mutation.Name(); ok {
 		_spec.SetField(publication.FieldName, field.TypeString, value)
 	}
+	if value, ok := pu.mutation.Tag(); ok {
+		_spec.SetField(publication.FieldTag, field.TypeString, value)
+	}
 	if value, ok := pu.mutation.URIToFile(); ok {
 		_spec.SetField(publication.FieldURIToFile, field.TypeString, value)
 	}
@@ -236,6 +245,12 @@ func (puo *PublicationUpdateOne) SetNillableIsDeprecated(b *bool) *PublicationUp
 // SetName sets the "name" field.
 func (puo *PublicationUpdateOne) SetName(s string) *PublicationUpdateOne {
 	puo.mutation.SetName(s)
+	return puo
+}
+
+// SetTag sets the "tag" field.
+func (puo *PublicationUpdateOne) SetTag(s string) *PublicationUpdateOne {
+	puo.mutation.SetTag(s)
 	return puo
 }
 
@@ -357,6 +372,9 @@ func (puo *PublicationUpdateOne) sqlSave(ctx context.Context) (_node *Publicatio
 	}
 	if value, ok := puo.mutation.Name(); ok {
 		_spec.SetField(publication.FieldName, field.TypeString, value)
+	}
+	if value, ok := puo.mutation.Tag(); ok {
+		_spec.SetField(publication.FieldTag, field.TypeString, value)
 	}
 	if value, ok := puo.mutation.URIToFile(); ok {
 		_spec.SetField(publication.FieldURIToFile, field.TypeString, value)

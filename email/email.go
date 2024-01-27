@@ -37,7 +37,6 @@ func SendVerificationEmail(receiver string, sessionId string) error {
 	)
 
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 

@@ -25,7 +25,7 @@ type UserQuery struct {
 	order                   []user.OrderOption
 	inters                  []Interceptor
 	predicates              []predicate.User
-	withPlugin              *PluginQuery
+	withPlugins             *PluginQuery
 	withVerificationSession *VerificationSessionQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -63,8 +63,8 @@ func (uq *UserQuery) Order(o ...user.OrderOption) *UserQuery {
 	return uq
 }
 
-// QueryPlugin chains the current query on the "plugin" edge.
-func (uq *UserQuery) QueryPlugin() *PluginQuery {
+// QueryPlugins chains the current query on the "plugins" edge.
+func (uq *UserQuery) QueryPlugins() *PluginQuery {
 	query := (&PluginClient{config: uq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := uq.prepareQuery(ctx); err != nil {
@@ -77,7 +77,7 @@ func (uq *UserQuery) QueryPlugin() *PluginQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(plugin.Table, plugin.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, user.PluginTable, user.PluginColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.PluginsTable, user.PluginsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -299,7 +299,7 @@ func (uq *UserQuery) Clone() *UserQuery {
 		order:                   append([]user.OrderOption{}, uq.order...),
 		inters:                  append([]Interceptor{}, uq.inters...),
 		predicates:              append([]predicate.User{}, uq.predicates...),
-		withPlugin:              uq.withPlugin.Clone(),
+		withPlugins:             uq.withPlugins.Clone(),
 		withVerificationSession: uq.withVerificationSession.Clone(),
 		// clone intermediate query.
 		sql:  uq.sql.Clone(),
@@ -307,14 +307,14 @@ func (uq *UserQuery) Clone() *UserQuery {
 	}
 }
 
-// WithPlugin tells the query-builder to eager-load the nodes that are connected to
-// the "plugin" edge. The optional arguments are used to configure the query builder of the edge.
-func (uq *UserQuery) WithPlugin(opts ...func(*PluginQuery)) *UserQuery {
+// WithPlugins tells the query-builder to eager-load the nodes that are connected to
+// the "plugins" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithPlugins(opts ...func(*PluginQuery)) *UserQuery {
 	query := (&PluginClient{config: uq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	uq.withPlugin = query
+	uq.withPlugins = query
 	return uq
 }
 
@@ -408,7 +408,7 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		nodes       = []*User{}
 		_spec       = uq.querySpec()
 		loadedTypes = [2]bool{
-			uq.withPlugin != nil,
+			uq.withPlugins != nil,
 			uq.withVerificationSession != nil,
 		}
 	)
@@ -430,10 +430,10 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := uq.withPlugin; query != nil {
-		if err := uq.loadPlugin(ctx, query, nodes,
-			func(n *User) { n.Edges.Plugin = []*Plugin{} },
-			func(n *User, e *Plugin) { n.Edges.Plugin = append(n.Edges.Plugin, e) }); err != nil {
+	if query := uq.withPlugins; query != nil {
+		if err := uq.loadPlugins(ctx, query, nodes,
+			func(n *User) { n.Edges.Plugins = []*Plugin{} },
+			func(n *User, e *Plugin) { n.Edges.Plugins = append(n.Edges.Plugins, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -449,7 +449,7 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	return nodes, nil
 }
 
-func (uq *UserQuery) loadPlugin(ctx context.Context, query *PluginQuery, nodes []*User, init func(*User), assign func(*User, *Plugin)) error {
+func (uq *UserQuery) loadPlugins(ctx context.Context, query *PluginQuery, nodes []*User, init func(*User), assign func(*User, *Plugin)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[uuid.UUID]*User)
 	for i := range nodes {
@@ -463,7 +463,7 @@ func (uq *UserQuery) loadPlugin(ctx context.Context, query *PluginQuery, nodes [
 		query.ctx.AppendFieldOnce(plugin.FieldOwnerID)
 	}
 	query.Where(predicate.Plugin(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(user.PluginColumn), fks...))
+		s.Where(sql.InValues(s.C(user.PluginsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

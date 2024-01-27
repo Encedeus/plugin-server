@@ -471,21 +471,21 @@ func EmailVerifiedNEQ(v bool) predicate.User {
 	return predicate.User(sql.FieldNEQ(FieldEmailVerified, v))
 }
 
-// HasPlugin applies the HasEdge predicate on the "plugin" edge.
-func HasPlugin() predicate.User {
+// HasPlugins applies the HasEdge predicate on the "plugins" edge.
+func HasPlugins() predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, PluginTable, PluginColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, PluginsTable, PluginsColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasPluginWith applies the HasEdge predicate on the "plugin" edge with a given conditions (other predicates).
-func HasPluginWith(preds ...predicate.Plugin) predicate.User {
+// HasPluginsWith applies the HasEdge predicate on the "plugins" edge with a given conditions (other predicates).
+func HasPluginsWith(preds ...predicate.Plugin) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		step := newPluginStep()
+		step := newPluginsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

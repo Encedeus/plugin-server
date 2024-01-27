@@ -1,5 +1,4 @@
 <script lang="ts">
-    import * as stream from "stream";
 
     export let
         label: "before" | "after" = "before",

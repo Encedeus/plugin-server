@@ -117,14 +117,14 @@ func (uu *UserUpdate) SetNillableEmailVerified(b *bool) *UserUpdate {
 	return uu
 }
 
-// AddPluginIDs adds the "plugin" edge to the Plugin entity by IDs.
+// AddPluginIDs adds the "plugins" edge to the Plugin entity by IDs.
 func (uu *UserUpdate) AddPluginIDs(ids ...uuid.UUID) *UserUpdate {
 	uu.mutation.AddPluginIDs(ids...)
 	return uu
 }
 
-// AddPlugin adds the "plugin" edges to the Plugin entity.
-func (uu *UserUpdate) AddPlugin(p ...*Plugin) *UserUpdate {
+// AddPlugins adds the "plugins" edges to the Plugin entity.
+func (uu *UserUpdate) AddPlugins(p ...*Plugin) *UserUpdate {
 	ids := make([]uuid.UUID, len(p))
 	for i := range p {
 		ids[i] = p[i].ID
@@ -152,20 +152,20 @@ func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
 }
 
-// ClearPlugin clears all "plugin" edges to the Plugin entity.
-func (uu *UserUpdate) ClearPlugin() *UserUpdate {
-	uu.mutation.ClearPlugin()
+// ClearPlugins clears all "plugins" edges to the Plugin entity.
+func (uu *UserUpdate) ClearPlugins() *UserUpdate {
+	uu.mutation.ClearPlugins()
 	return uu
 }
 
-// RemovePluginIDs removes the "plugin" edge to Plugin entities by IDs.
+// RemovePluginIDs removes the "plugins" edge to Plugin entities by IDs.
 func (uu *UserUpdate) RemovePluginIDs(ids ...uuid.UUID) *UserUpdate {
 	uu.mutation.RemovePluginIDs(ids...)
 	return uu
 }
 
-// RemovePlugin removes "plugin" edges to Plugin entities.
-func (uu *UserUpdate) RemovePlugin(p ...*Plugin) *UserUpdate {
+// RemovePlugins removes "plugins" edges to Plugin entities.
+func (uu *UserUpdate) RemovePlugins(p ...*Plugin) *UserUpdate {
 	ids := make([]uuid.UUID, len(p))
 	for i := range p {
 		ids[i] = p[i].ID
@@ -290,12 +290,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.EmailVerified(); ok {
 		_spec.SetField(user.FieldEmailVerified, field.TypeBool, value)
 	}
-	if uu.mutation.PluginCleared() {
+	if uu.mutation.PluginsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   user.PluginTable,
-			Columns: []string{user.PluginColumn},
+			Inverse: false,
+			Table:   user.PluginsTable,
+			Columns: []string{user.PluginsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(plugin.FieldID, field.TypeUUID),
@@ -303,12 +303,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.RemovedPluginIDs(); len(nodes) > 0 && !uu.mutation.PluginCleared() {
+	if nodes := uu.mutation.RemovedPluginsIDs(); len(nodes) > 0 && !uu.mutation.PluginsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   user.PluginTable,
-			Columns: []string{user.PluginColumn},
+			Inverse: false,
+			Table:   user.PluginsTable,
+			Columns: []string{user.PluginsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(plugin.FieldID, field.TypeUUID),
@@ -319,12 +319,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.PluginIDs(); len(nodes) > 0 {
+	if nodes := uu.mutation.PluginsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   user.PluginTable,
-			Columns: []string{user.PluginColumn},
+			Inverse: false,
+			Table:   user.PluginsTable,
+			Columns: []string{user.PluginsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(plugin.FieldID, field.TypeUUID),
@@ -486,14 +486,14 @@ func (uuo *UserUpdateOne) SetNillableEmailVerified(b *bool) *UserUpdateOne {
 	return uuo
 }
 
-// AddPluginIDs adds the "plugin" edge to the Plugin entity by IDs.
+// AddPluginIDs adds the "plugins" edge to the Plugin entity by IDs.
 func (uuo *UserUpdateOne) AddPluginIDs(ids ...uuid.UUID) *UserUpdateOne {
 	uuo.mutation.AddPluginIDs(ids...)
 	return uuo
 }
 
-// AddPlugin adds the "plugin" edges to the Plugin entity.
-func (uuo *UserUpdateOne) AddPlugin(p ...*Plugin) *UserUpdateOne {
+// AddPlugins adds the "plugins" edges to the Plugin entity.
+func (uuo *UserUpdateOne) AddPlugins(p ...*Plugin) *UserUpdateOne {
 	ids := make([]uuid.UUID, len(p))
 	for i := range p {
 		ids[i] = p[i].ID
@@ -521,20 +521,20 @@ func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
 }
 
-// ClearPlugin clears all "plugin" edges to the Plugin entity.
-func (uuo *UserUpdateOne) ClearPlugin() *UserUpdateOne {
-	uuo.mutation.ClearPlugin()
+// ClearPlugins clears all "plugins" edges to the Plugin entity.
+func (uuo *UserUpdateOne) ClearPlugins() *UserUpdateOne {
+	uuo.mutation.ClearPlugins()
 	return uuo
 }
 
-// RemovePluginIDs removes the "plugin" edge to Plugin entities by IDs.
+// RemovePluginIDs removes the "plugins" edge to Plugin entities by IDs.
 func (uuo *UserUpdateOne) RemovePluginIDs(ids ...uuid.UUID) *UserUpdateOne {
 	uuo.mutation.RemovePluginIDs(ids...)
 	return uuo
 }
 
-// RemovePlugin removes "plugin" edges to Plugin entities.
-func (uuo *UserUpdateOne) RemovePlugin(p ...*Plugin) *UserUpdateOne {
+// RemovePlugins removes "plugins" edges to Plugin entities.
+func (uuo *UserUpdateOne) RemovePlugins(p ...*Plugin) *UserUpdateOne {
 	ids := make([]uuid.UUID, len(p))
 	for i := range p {
 		ids[i] = p[i].ID
@@ -689,12 +689,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if value, ok := uuo.mutation.EmailVerified(); ok {
 		_spec.SetField(user.FieldEmailVerified, field.TypeBool, value)
 	}
-	if uuo.mutation.PluginCleared() {
+	if uuo.mutation.PluginsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   user.PluginTable,
-			Columns: []string{user.PluginColumn},
+			Inverse: false,
+			Table:   user.PluginsTable,
+			Columns: []string{user.PluginsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(plugin.FieldID, field.TypeUUID),
@@ -702,12 +702,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.RemovedPluginIDs(); len(nodes) > 0 && !uuo.mutation.PluginCleared() {
+	if nodes := uuo.mutation.RemovedPluginsIDs(); len(nodes) > 0 && !uuo.mutation.PluginsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   user.PluginTable,
-			Columns: []string{user.PluginColumn},
+			Inverse: false,
+			Table:   user.PluginsTable,
+			Columns: []string{user.PluginsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(plugin.FieldID, field.TypeUUID),
@@ -718,12 +718,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.PluginIDs(); len(nodes) > 0 {
+	if nodes := uuo.mutation.PluginsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   user.PluginTable,
-			Columns: []string{user.PluginColumn},
+			Inverse: false,
+			Table:   user.PluginsTable,
+			Columns: []string{user.PluginsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(plugin.FieldID, field.TypeUUID),

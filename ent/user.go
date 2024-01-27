@@ -42,8 +42,8 @@ type User struct {
 
 // UserEdges holds the relations/edges for other nodes in the graph.
 type UserEdges struct {
-	// Plugin holds the value of the plugin edge.
-	Plugin []*Plugin `json:"plugin,omitempty"`
+	// Plugins holds the value of the plugins edge.
+	Plugins []*Plugin `json:"plugins,omitempty"`
 	// VerificationSession holds the value of the verification_session edge.
 	VerificationSession []*VerificationSession `json:"verification_session,omitempty"`
 	// loadedTypes holds the information for reporting if a
@@ -51,13 +51,13 @@ type UserEdges struct {
 	loadedTypes [2]bool
 }
 
-// PluginOrErr returns the Plugin value or an error if the edge
+// PluginsOrErr returns the Plugins value or an error if the edge
 // was not loaded in eager-loading.
-func (e UserEdges) PluginOrErr() ([]*Plugin, error) {
+func (e UserEdges) PluginsOrErr() ([]*Plugin, error) {
 	if e.loadedTypes[0] {
-		return e.Plugin, nil
+		return e.Plugins, nil
 	}
-	return nil, &NotLoadedError{edge: "plugin"}
+	return nil, &NotLoadedError{edge: "plugins"}
 }
 
 // VerificationSessionOrErr returns the VerificationSession value or an error if the edge
@@ -164,9 +164,9 @@ func (u *User) Value(name string) (ent.Value, error) {
 	return u.selectValues.Get(name)
 }
 
-// QueryPlugin queries the "plugin" edge of the User entity.
-func (u *User) QueryPlugin() *PluginQuery {
-	return NewUserClient(u.config).QueryPlugin(u)
+// QueryPlugins queries the "plugins" edge of the User entity.
+func (u *User) QueryPlugins() *PluginQuery {
+	return NewUserClient(u.config).QueryPlugins(u)
 }
 
 // QueryVerificationSession queries the "verification_session" edge of the User entity.

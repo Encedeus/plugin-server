@@ -43,6 +43,7 @@ type PluginMutation struct {
 	typ                 string
 	id                  *uuid.UUID
 	name                *string
+	created_at          *time.Time
 	clearedFields       map[string]struct{}
 	owner               *uuid.UUID
 	clearedowner        bool
@@ -268,6 +269,42 @@ func (m *PluginMutation) ResetSourceID() {
 	m.source = nil
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (m *PluginMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *PluginMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Plugin entity.
+// If the Plugin object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PluginMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *PluginMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
 // ClearOwner clears the "owner" edge to the User entity.
 func (m *PluginMutation) ClearOwner() {
 	m.clearedowner = true
@@ -410,7 +447,7 @@ func (m *PluginMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PluginMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 4)
 	if m.name != nil {
 		fields = append(fields, plugin.FieldName)
 	}
@@ -419,6 +456,9 @@ func (m *PluginMutation) Fields() []string {
 	}
 	if m.source != nil {
 		fields = append(fields, plugin.FieldSourceID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, plugin.FieldCreatedAt)
 	}
 	return fields
 }
@@ -434,6 +474,8 @@ func (m *PluginMutation) Field(name string) (ent.Value, bool) {
 		return m.OwnerID()
 	case plugin.FieldSourceID:
 		return m.SourceID()
+	case plugin.FieldCreatedAt:
+		return m.CreatedAt()
 	}
 	return nil, false
 }
@@ -449,6 +491,8 @@ func (m *PluginMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldOwnerID(ctx)
 	case plugin.FieldSourceID:
 		return m.OldSourceID(ctx)
+	case plugin.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown Plugin field %s", name)
 }
@@ -478,6 +522,13 @@ func (m *PluginMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSourceID(v)
+		return nil
+	case plugin.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Plugin field %s", name)
@@ -539,6 +590,9 @@ func (m *PluginMutation) ResetField(name string) error {
 		return nil
 	case plugin.FieldSourceID:
 		m.ResetSourceID()
+		return nil
+	case plugin.FieldCreatedAt:
+		m.ResetCreatedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown Plugin field %s", name)
@@ -673,6 +727,7 @@ type PublicationMutation struct {
 	created_at    *time.Time
 	is_deprecated *bool
 	name          *string
+	tag           *string
 	uri_to_file   *string
 	clearedFields map[string]struct{}
 	plugin        *uuid.UUID
@@ -888,6 +943,42 @@ func (m *PublicationMutation) ResetName() {
 	m.name = nil
 }
 
+// SetTag sets the "tag" field.
+func (m *PublicationMutation) SetTag(s string) {
+	m.tag = &s
+}
+
+// Tag returns the value of the "tag" field in the mutation.
+func (m *PublicationMutation) Tag() (r string, exists bool) {
+	v := m.tag
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTag returns the old "tag" field's value of the Publication entity.
+// If the Publication object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PublicationMutation) OldTag(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTag is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTag requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTag: %w", err)
+	}
+	return oldValue.Tag, nil
+}
+
+// ResetTag resets all changes to the "tag" field.
+func (m *PublicationMutation) ResetTag() {
+	m.tag = nil
+}
+
 // SetURIToFile sets the "uri_to_file" field.
 func (m *PublicationMutation) SetURIToFile(s string) {
 	m.uri_to_file = &s
@@ -1021,7 +1112,7 @@ func (m *PublicationMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PublicationMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.created_at != nil {
 		fields = append(fields, publication.FieldCreatedAt)
 	}
@@ -1030,6 +1121,9 @@ func (m *PublicationMutation) Fields() []string {
 	}
 	if m.name != nil {
 		fields = append(fields, publication.FieldName)
+	}
+	if m.tag != nil {
+		fields = append(fields, publication.FieldTag)
 	}
 	if m.uri_to_file != nil {
 		fields = append(fields, publication.FieldURIToFile)
@@ -1051,6 +1145,8 @@ func (m *PublicationMutation) Field(name string) (ent.Value, bool) {
 		return m.IsDeprecated()
 	case publication.FieldName:
 		return m.Name()
+	case publication.FieldTag:
+		return m.Tag()
 	case publication.FieldURIToFile:
 		return m.URIToFile()
 	case publication.FieldPluginID:
@@ -1070,6 +1166,8 @@ func (m *PublicationMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldIsDeprecated(ctx)
 	case publication.FieldName:
 		return m.OldName(ctx)
+	case publication.FieldTag:
+		return m.OldTag(ctx)
 	case publication.FieldURIToFile:
 		return m.OldURIToFile(ctx)
 	case publication.FieldPluginID:
@@ -1103,6 +1201,13 @@ func (m *PublicationMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
+		return nil
+	case publication.FieldTag:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTag(v)
 		return nil
 	case publication.FieldURIToFile:
 		v, ok := value.(string)
@@ -1175,6 +1280,9 @@ func (m *PublicationMutation) ResetField(name string) error {
 		return nil
 	case publication.FieldName:
 		m.ResetName()
+		return nil
+	case publication.FieldTag:
+		m.ResetTag()
 		return nil
 	case publication.FieldURIToFile:
 		m.ResetURIToFile()
@@ -1694,9 +1802,9 @@ type UserMutation struct {
 	name                        *string
 	email_verified              *bool
 	clearedFields               map[string]struct{}
-	plugin                      map[uuid.UUID]struct{}
-	removedplugin               map[uuid.UUID]struct{}
-	clearedplugin               bool
+	plugins                     map[uuid.UUID]struct{}
+	removedplugins              map[uuid.UUID]struct{}
+	clearedplugins              bool
 	verification_session        map[string]struct{}
 	removedverification_session map[string]struct{}
 	clearedverification_session bool
@@ -2110,58 +2218,58 @@ func (m *UserMutation) ResetEmailVerified() {
 	m.email_verified = nil
 }
 
-// AddPluginIDs adds the "plugin" edge to the Plugin entity by ids.
+// AddPluginIDs adds the "plugins" edge to the Plugin entity by ids.
 func (m *UserMutation) AddPluginIDs(ids ...uuid.UUID) {
-	if m.plugin == nil {
-		m.plugin = make(map[uuid.UUID]struct{})
+	if m.plugins == nil {
+		m.plugins = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		m.plugin[ids[i]] = struct{}{}
+		m.plugins[ids[i]] = struct{}{}
 	}
 }
 
-// ClearPlugin clears the "plugin" edge to the Plugin entity.
-func (m *UserMutation) ClearPlugin() {
-	m.clearedplugin = true
+// ClearPlugins clears the "plugins" edge to the Plugin entity.
+func (m *UserMutation) ClearPlugins() {
+	m.clearedplugins = true
 }
 
-// PluginCleared reports if the "plugin" edge to the Plugin entity was cleared.
-func (m *UserMutation) PluginCleared() bool {
-	return m.clearedplugin
+// PluginsCleared reports if the "plugins" edge to the Plugin entity was cleared.
+func (m *UserMutation) PluginsCleared() bool {
+	return m.clearedplugins
 }
 
-// RemovePluginIDs removes the "plugin" edge to the Plugin entity by IDs.
+// RemovePluginIDs removes the "plugins" edge to the Plugin entity by IDs.
 func (m *UserMutation) RemovePluginIDs(ids ...uuid.UUID) {
-	if m.removedplugin == nil {
-		m.removedplugin = make(map[uuid.UUID]struct{})
+	if m.removedplugins == nil {
+		m.removedplugins = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		delete(m.plugin, ids[i])
-		m.removedplugin[ids[i]] = struct{}{}
+		delete(m.plugins, ids[i])
+		m.removedplugins[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedPlugin returns the removed IDs of the "plugin" edge to the Plugin entity.
-func (m *UserMutation) RemovedPluginIDs() (ids []uuid.UUID) {
-	for id := range m.removedplugin {
+// RemovedPlugins returns the removed IDs of the "plugins" edge to the Plugin entity.
+func (m *UserMutation) RemovedPluginsIDs() (ids []uuid.UUID) {
+	for id := range m.removedplugins {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// PluginIDs returns the "plugin" edge IDs in the mutation.
-func (m *UserMutation) PluginIDs() (ids []uuid.UUID) {
-	for id := range m.plugin {
+// PluginsIDs returns the "plugins" edge IDs in the mutation.
+func (m *UserMutation) PluginsIDs() (ids []uuid.UUID) {
+	for id := range m.plugins {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetPlugin resets all changes to the "plugin" edge.
-func (m *UserMutation) ResetPlugin() {
-	m.plugin = nil
-	m.clearedplugin = false
-	m.removedplugin = nil
+// ResetPlugins resets all changes to the "plugins" edge.
+func (m *UserMutation) ResetPlugins() {
+	m.plugins = nil
+	m.clearedplugins = false
+	m.removedplugins = nil
 }
 
 // AddVerificationSessionIDs adds the "verification_session" edge to the VerificationSession entity by ids.
@@ -2480,8 +2588,8 @@ func (m *UserMutation) ResetField(name string) error {
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
 	edges := make([]string, 0, 2)
-	if m.plugin != nil {
-		edges = append(edges, user.EdgePlugin)
+	if m.plugins != nil {
+		edges = append(edges, user.EdgePlugins)
 	}
 	if m.verification_session != nil {
 		edges = append(edges, user.EdgeVerificationSession)
@@ -2493,9 +2601,9 @@ func (m *UserMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *UserMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case user.EdgePlugin:
-		ids := make([]ent.Value, 0, len(m.plugin))
-		for id := range m.plugin {
+	case user.EdgePlugins:
+		ids := make([]ent.Value, 0, len(m.plugins))
+		for id := range m.plugins {
 			ids = append(ids, id)
 		}
 		return ids
@@ -2512,8 +2620,8 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 2)
-	if m.removedplugin != nil {
-		edges = append(edges, user.EdgePlugin)
+	if m.removedplugins != nil {
+		edges = append(edges, user.EdgePlugins)
 	}
 	if m.removedverification_session != nil {
 		edges = append(edges, user.EdgeVerificationSession)
@@ -2525,9 +2633,9 @@ func (m *UserMutation) RemovedEdges() []string {
 // the given name in this mutation.
 func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
-	case user.EdgePlugin:
-		ids := make([]ent.Value, 0, len(m.removedplugin))
-		for id := range m.removedplugin {
+	case user.EdgePlugins:
+		ids := make([]ent.Value, 0, len(m.removedplugins))
+		for id := range m.removedplugins {
 			ids = append(ids, id)
 		}
 		return ids
@@ -2544,8 +2652,8 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 2)
-	if m.clearedplugin {
-		edges = append(edges, user.EdgePlugin)
+	if m.clearedplugins {
+		edges = append(edges, user.EdgePlugins)
 	}
 	if m.clearedverification_session {
 		edges = append(edges, user.EdgeVerificationSession)
@@ -2557,8 +2665,8 @@ func (m *UserMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *UserMutation) EdgeCleared(name string) bool {
 	switch name {
-	case user.EdgePlugin:
-		return m.clearedplugin
+	case user.EdgePlugins:
+		return m.clearedplugins
 	case user.EdgeVerificationSession:
 		return m.clearedverification_session
 	}
@@ -2577,8 +2685,8 @@ func (m *UserMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *UserMutation) ResetEdge(name string) error {
 	switch name {
-	case user.EdgePlugin:
-		m.ResetPlugin()
+	case user.EdgePlugins:
+		m.ResetPlugins()
 		return nil
 	case user.EdgeVerificationSession:
 		m.ResetVerificationSession()

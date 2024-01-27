@@ -32,19 +32,19 @@ const (
 	FieldName = "name"
 	// FieldEmailVerified holds the string denoting the email_verified field in the database.
 	FieldEmailVerified = "email_verified"
-	// EdgePlugin holds the string denoting the plugin edge name in mutations.
-	EdgePlugin = "plugin"
+	// EdgePlugins holds the string denoting the plugins edge name in mutations.
+	EdgePlugins = "plugins"
 	// EdgeVerificationSession holds the string denoting the verification_session edge name in mutations.
 	EdgeVerificationSession = "verification_session"
 	// Table holds the table name of the user in the database.
 	Table = "users"
-	// PluginTable is the table that holds the plugin relation/edge.
-	PluginTable = "plugins"
-	// PluginInverseTable is the table name for the Plugin entity.
+	// PluginsTable is the table that holds the plugins relation/edge.
+	PluginsTable = "plugins"
+	// PluginsInverseTable is the table name for the Plugin entity.
 	// It exists in this package in order to avoid circular dependency with the "plugin" package.
-	PluginInverseTable = "plugins"
-	// PluginColumn is the table column denoting the plugin relation/edge.
-	PluginColumn = "owner_id"
+	PluginsInverseTable = "plugins"
+	// PluginsColumn is the table column denoting the plugins relation/edge.
+	PluginsColumn = "owner_id"
 	// VerificationSessionTable is the table that holds the verification_session relation/edge.
 	VerificationSessionTable = "verification_sessions"
 	// VerificationSessionInverseTable is the table name for the VerificationSession entity.
@@ -150,17 +150,17 @@ func ByEmailVerified(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEmailVerified, opts...).ToFunc()
 }
 
-// ByPluginCount orders the results by plugin count.
-func ByPluginCount(opts ...sql.OrderTermOption) OrderOption {
+// ByPluginsCount orders the results by plugins count.
+func ByPluginsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newPluginStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newPluginsStep(), opts...)
 	}
 }
 
-// ByPlugin orders the results by plugin terms.
-func ByPlugin(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByPlugins orders the results by plugins terms.
+func ByPlugins(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newPluginStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newPluginsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 
@@ -177,11 +177,11 @@ func ByVerificationSession(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOpti
 		sqlgraph.OrderByNeighborTerms(s, newVerificationSessionStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-func newPluginStep() *sqlgraph.Step {
+func newPluginsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(PluginInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, true, PluginTable, PluginColumn),
+		sqlgraph.To(PluginsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, PluginsTable, PluginsColumn),
 	)
 }
 func newVerificationSessionStep() *sqlgraph.Step {

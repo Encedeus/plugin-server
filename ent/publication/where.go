@@ -71,6 +71,11 @@ func Name(v string) predicate.Publication {
 	return predicate.Publication(sql.FieldEQ(FieldName, v))
 }
 
+// Tag applies equality check predicate on the "tag" field. It's identical to TagEQ.
+func Tag(v string) predicate.Publication {
+	return predicate.Publication(sql.FieldEQ(FieldTag, v))
+}
+
 // URIToFile applies equality check predicate on the "uri_to_file" field. It's identical to URIToFileEQ.
 func URIToFile(v string) predicate.Publication {
 	return predicate.Publication(sql.FieldEQ(FieldURIToFile, v))
@@ -194,6 +199,71 @@ func NameEqualFold(v string) predicate.Publication {
 // NameContainsFold applies the ContainsFold predicate on the "name" field.
 func NameContainsFold(v string) predicate.Publication {
 	return predicate.Publication(sql.FieldContainsFold(FieldName, v))
+}
+
+// TagEQ applies the EQ predicate on the "tag" field.
+func TagEQ(v string) predicate.Publication {
+	return predicate.Publication(sql.FieldEQ(FieldTag, v))
+}
+
+// TagNEQ applies the NEQ predicate on the "tag" field.
+func TagNEQ(v string) predicate.Publication {
+	return predicate.Publication(sql.FieldNEQ(FieldTag, v))
+}
+
+// TagIn applies the In predicate on the "tag" field.
+func TagIn(vs ...string) predicate.Publication {
+	return predicate.Publication(sql.FieldIn(FieldTag, vs...))
+}
+
+// TagNotIn applies the NotIn predicate on the "tag" field.
+func TagNotIn(vs ...string) predicate.Publication {
+	return predicate.Publication(sql.FieldNotIn(FieldTag, vs...))
+}
+
+// TagGT applies the GT predicate on the "tag" field.
+func TagGT(v string) predicate.Publication {
+	return predicate.Publication(sql.FieldGT(FieldTag, v))
+}
+
+// TagGTE applies the GTE predicate on the "tag" field.
+func TagGTE(v string) predicate.Publication {
+	return predicate.Publication(sql.FieldGTE(FieldTag, v))
+}
+
+// TagLT applies the LT predicate on the "tag" field.
+func TagLT(v string) predicate.Publication {
+	return predicate.Publication(sql.FieldLT(FieldTag, v))
+}
+
+// TagLTE applies the LTE predicate on the "tag" field.
+func TagLTE(v string) predicate.Publication {
+	return predicate.Publication(sql.FieldLTE(FieldTag, v))
+}
+
+// TagContains applies the Contains predicate on the "tag" field.
+func TagContains(v string) predicate.Publication {
+	return predicate.Publication(sql.FieldContains(FieldTag, v))
+}
+
+// TagHasPrefix applies the HasPrefix predicate on the "tag" field.
+func TagHasPrefix(v string) predicate.Publication {
+	return predicate.Publication(sql.FieldHasPrefix(FieldTag, v))
+}
+
+// TagHasSuffix applies the HasSuffix predicate on the "tag" field.
+func TagHasSuffix(v string) predicate.Publication {
+	return predicate.Publication(sql.FieldHasSuffix(FieldTag, v))
+}
+
+// TagEqualFold applies the EqualFold predicate on the "tag" field.
+func TagEqualFold(v string) predicate.Publication {
+	return predicate.Publication(sql.FieldEqualFold(FieldTag, v))
+}
+
+// TagContainsFold applies the ContainsFold predicate on the "tag" field.
+func TagContainsFold(v string) predicate.Publication {
+	return predicate.Publication(sql.FieldContainsFold(FieldTag, v))
 }
 
 // URIToFileEQ applies the EQ predicate on the "uri_to_file" field.

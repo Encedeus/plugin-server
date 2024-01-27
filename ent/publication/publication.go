@@ -20,6 +20,8 @@ const (
 	FieldIsDeprecated = "is_deprecated"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldTag holds the string denoting the tag field in the database.
+	FieldTag = "tag"
 	// FieldURIToFile holds the string denoting the uri_to_file field in the database.
 	FieldURIToFile = "uri_to_file"
 	// FieldPluginID holds the string denoting the plugin_id field in the database.
@@ -43,6 +45,7 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldIsDeprecated,
 	FieldName,
+	FieldTag,
 	FieldURIToFile,
 	FieldPluginID,
 }
@@ -87,6 +90,11 @@ func ByIsDeprecated(opts ...sql.OrderTermOption) OrderOption {
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// ByTag orders the results by the tag field.
+func ByTag(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTag, opts...).ToFunc()
 }
 
 // ByURIToFile orders the results by the uri_to_file field.

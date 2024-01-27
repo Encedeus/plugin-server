@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -38,6 +39,20 @@ func (pc *PluginCreate) SetOwnerID(u uuid.UUID) *PluginCreate {
 // SetSourceID sets the "source_id" field.
 func (pc *PluginCreate) SetSourceID(i int) *PluginCreate {
 	pc.mutation.SetSourceID(i)
+	return pc
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (pc *PluginCreate) SetCreatedAt(t time.Time) *PluginCreate {
+	pc.mutation.SetCreatedAt(t)
+	return pc
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (pc *PluginCreate) SetNillableCreatedAt(t *time.Time) *PluginCreate {
+	if t != nil {
+		pc.SetCreatedAt(*t)
+	}
 	return pc
 }
 
@@ -115,6 +130,10 @@ func (pc *PluginCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (pc *PluginCreate) defaults() {
+	if _, ok := pc.mutation.CreatedAt(); !ok {
+		v := plugin.DefaultCreatedAt()
+		pc.mutation.SetCreatedAt(v)
+	}
 	if _, ok := pc.mutation.ID(); !ok {
 		v := plugin.DefaultID()
 		pc.mutation.SetID(v)
@@ -131,6 +150,9 @@ func (pc *PluginCreate) check() error {
 	}
 	if _, ok := pc.mutation.SourceID(); !ok {
 		return &ValidationError{Name: "source_id", err: errors.New(`ent: missing required field "Plugin.source_id"`)}
+	}
+	if _, ok := pc.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Plugin.created_at"`)}
 	}
 	if _, ok := pc.mutation.OwnerID(); !ok {
 		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Plugin.owner"`)}
@@ -177,10 +199,14 @@ func (pc *PluginCreate) createSpec() (*Plugin, *sqlgraph.CreateSpec) {
 		_spec.SetField(plugin.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
+	if value, ok := pc.mutation.CreatedAt(); ok {
+		_spec.SetField(plugin.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
 	if nodes := pc.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   plugin.OwnerTable,
 			Columns: []string{plugin.OwnerColumn},
 			Bidi:    false,

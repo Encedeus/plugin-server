@@ -349,7 +349,7 @@ func (c *PluginClient) QueryOwner(pl *Plugin) *UserQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(plugin.Table, plugin.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, plugin.OwnerTable, plugin.OwnerColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, plugin.OwnerTable, plugin.OwnerColumn),
 		)
 		fromV = sqlgraph.Neighbors(pl.driver.Dialect(), step)
 		return fromV, nil
@@ -820,15 +820,15 @@ func (c *UserClient) GetX(ctx context.Context, id uuid.UUID) *User {
 	return obj
 }
 
-// QueryPlugin queries the plugin edge of a User.
-func (c *UserClient) QueryPlugin(u *User) *PluginQuery {
+// QueryPlugins queries the plugins edge of a User.
+func (c *UserClient) QueryPlugins(u *User) *PluginQuery {
 	query := (&PluginClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := u.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(plugin.Table, plugin.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, user.PluginTable, user.PluginColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.PluginsTable, user.PluginsColumn),
 		)
 		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
 		return fromV, nil

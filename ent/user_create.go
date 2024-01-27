@@ -125,14 +125,14 @@ func (uc *UserCreate) SetNillableID(u *uuid.UUID) *UserCreate {
 	return uc
 }
 
-// AddPluginIDs adds the "plugin" edge to the Plugin entity by IDs.
+// AddPluginIDs adds the "plugins" edge to the Plugin entity by IDs.
 func (uc *UserCreate) AddPluginIDs(ids ...uuid.UUID) *UserCreate {
 	uc.mutation.AddPluginIDs(ids...)
 	return uc
 }
 
-// AddPlugin adds the "plugin" edges to the Plugin entity.
-func (uc *UserCreate) AddPlugin(p ...*Plugin) *UserCreate {
+// AddPlugins adds the "plugins" edges to the Plugin entity.
+func (uc *UserCreate) AddPlugins(p ...*Plugin) *UserCreate {
 	ids := make([]uuid.UUID, len(p))
 	for i := range p {
 		ids[i] = p[i].ID
@@ -327,12 +327,12 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldEmailVerified, field.TypeBool, value)
 		_node.EmailVerified = value
 	}
-	if nodes := uc.mutation.PluginIDs(); len(nodes) > 0 {
+	if nodes := uc.mutation.PluginsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   user.PluginTable,
-			Columns: []string{user.PluginColumn},
+			Inverse: false,
+			Table:   user.PluginsTable,
+			Columns: []string{user.PluginsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(plugin.FieldID, field.TypeUUID),
