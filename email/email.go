@@ -11,14 +11,14 @@ func SendVerificationEmail(receiver string, sessionId string) error {
 	from := config.Config.SMTP.Address
 	to := []string{receiver}
 
-	message := []byte(fmt.Sprintf(
-		`Subject: email verification
+	message := fmt.Sprintf(
+		`
 
 <a href="%s">
 <button>verify email</button>
 </a>`,
 		config.Config.Server.URI()+"/auth/email/verify/"+sessionId,
-	))
+	)
 
 	// auth
 	auth := smtp.PlainAuth("",
@@ -28,12 +28,14 @@ func SendVerificationEmail(receiver string, sessionId string) error {
 	)
 
 	// sending
+	subject := "Subject: email verification\n"
+	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
 	err := smtp.SendMail(
 		fmt.Sprintf("%s:%d", config.Config.SMTP.Host, config.Config.SMTP.Port),
 		auth,
 		from,
 		to,
-		message,
+		[]byte(subject+mime+message),
 	)
 
 	if err != nil {
