@@ -8,6 +8,9 @@
     import PluginInfo from "$lib/components/plugin/BasicPluginInfo.svelte";
     import {navigating, page} from "$app/stores";
     import {goto} from "$app/navigation";
+    import Button from "$lib/components/generic/Button.svelte";
+    import Search from "$lib/components/internal/search/Search.svelte";
+    import FilledContainer from "$lib/components/generic/FilledContainer.svelte";
 
     const api = getApi();
 
@@ -25,10 +28,10 @@
         const isAuthEstablished = isAuthenticated();
 
         if (isAuthEstablished == isAuth) {
-            return
+            return;
         }
 
-        isAuth = isAuthEstablished
+        isAuth = isAuthEstablished;
 
         if (isAuth) {
             if (!$userDataStore) {
@@ -98,44 +101,43 @@
         </a>
 
         <div class="navbarComponent" id="searchBarContainer">
-            <input on:focusin={onInputFocus}
-                   on:focusout={onInputFocusOut}
-                   on:keyup={() =>{onInputFocus(); getSearchSuggestions()}}
-                   on:keyup={handleInputSubmit}
-                   bind:value={searchValue}
-                   type="search" id="searchBar"
-                   class="navbarComponent"
-                   placeholder="Search plugins"
+            <Search on:focusin={onInputFocus}
+                    on:focusout={onInputFocusOut}
+                    on:keyup={(e) =>{onInputFocus(); getSearchSuggestions(); handleInputSubmit(e)}}
+                    bind:value={searchValue}
+                    type="search" id="searchBar"
+                    class="navbarComponent"
+                    placeholder="Search plugins"
+                    size="lg"
             />
 
             <div on:mouseenter={onMouseEnterSuggestionBox}
                  on:mouseleave={OnMouseLeaveSuggestionBox}
                  class:invisible={!(inputInFocus || mouseOverSuggestions)}
-                 class="suggestions"
+                 class="suggestions outline outline-2 outline-indigo-400 bg-indigo-600"
                  id="searchSuggestions"
             >
 
                 {#if plugins.length > 0}
                     {#each plugins as plugin}
-                        <PluginInfo plugin={plugin} label="name"/>
+                        <FilledContainer className="ml-0.5 mr-0.5">
+                            <PluginInfo className="ml-1" plugin={plugin} label="name"/>
+                        </FilledContainer>
                     {/each}
                 {:else}
-                    <p>...</p>
+                    <p class="ml-1">...</p>
                 {/if}
             </div>
         </div>
 
         <div>
-            <a href="/documentation">
-                <button id="docs" class="navbarComponent">Documentation</button>
-            </a>
+            <Button redirect="/documentation">Documentation</Button>
         </div>
 
         {#if !isAuth}
             <div id="authAnchors">
-                <a href="/auth/signup" id="signUp" class="navbarComponent">Sign Up</a>
-
-                <a href="/auth/login" id="signIn" class="navbarComponent">Sign In</a>
+                <Button redirect="/auth/signup">Sign Up</Button>
+                <Button redirect="/auth/login">Sign In</Button>
             </div>
         {:else}
             <!-- todo: implement lazy loading -->
@@ -155,7 +157,7 @@
 
         position: relative;
 
-        background-color: gray;
+        background-color: #3730a3;
 
         display: flex;
         flex-direction: row;
@@ -179,7 +181,6 @@
 
     #searchBarContainer {
         min-width: 20%;
-        width: 50%;
         border: 0;
         padding: 0;
     }
@@ -222,8 +223,17 @@
     }
 
     .suggestions {
+        display: flex;
+        flex-direction: column;
+        margin-top: 2px;
+        margin-left: auto;
+        margin-right: auto;
         position: relative;
-        background-color: darkgray;
-        height: max-content;
+        background-color: #10182A;
+        border-radius: 0 0 10px 10px;
+        width: calc(100% - 40px);
+        z-index: 100;
+
+        gap: 3px 3px;
     }
 </style>

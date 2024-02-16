@@ -1,6 +1,7 @@
 <script lang="ts">
     export let
-        value: string = ""
+        value: string = "",
+        className: string;
 </script>
 
-<p>{value}</p>
+<p class="text-red-500 {className}">{value}</p>

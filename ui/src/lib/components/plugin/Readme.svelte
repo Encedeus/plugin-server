@@ -2,30 +2,42 @@
     import {Plugin} from "@encedeus/registry-js-api";
     import {getApi} from "$lib/api/api";
     import {PluginGetReadmeRequest} from "@encedeus/registry-js-api/src/proto/plugin_api";
-    import { marked } from 'marked'
+    import {marked} from 'marked';
+
     export let plugin: Plugin;
+    export let className: string;
     let readme: string;
+
     async function loadData() {
-        readme = ""
+        readme = "";
 
         const response = await getApi().PluginService.GetReadme({pluginId: plugin.id} as PluginGetReadmeRequest);
 
         if (response.error) {
             readme = response.error.message;
-            return
+            return;
         }
 
         // translate markdown to html
+        if (!response.response?.readme!) {
+            return;
+        }
+
         readme = <string>marked(response.response?.readme!);
+        console.log(readme);
     }
 
-    $: plugin && loadData()
-    loadData()
-
+    $: plugin && loadData();
 </script>
 
 <!-- todo: skeletal loading -->
 
-<div>
-    {@html readme}
-</div>
+{#if readme}
+    <div class="readme break-words {className}">
+        {@html readme}
+    </div>
+{:else}
+    <div>
+        <div class=""></div>
+    </div>
+{/if}

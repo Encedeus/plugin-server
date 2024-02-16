@@ -3,8 +3,8 @@
     import {Plugin, PluginPublishReleaseRequest} from "@encedeus/registry-js-api";
     import {userDataStore} from "$lib/stores/userDataStore";
     import {goto, invalidateAll} from "$app/navigation";
-    import Input from "$lib/components/Input.svelte";
-    import Button from "$lib/components/Button.svelte";
+    import Input from "$lib/components/generic/Input.svelte";
+    import Button from "$lib/components/generic/Button.svelte";
     import ErrorTextBox from "$lib/components/ErrorTextBox.svelte";
     import {getApi} from "$lib/api/api";
 
@@ -55,22 +55,27 @@
 
 <div id="page">
 
-    <div class="form">
-        <Input bind:value={releaseName} className="inlineComponent" inline={true} helperText="release name"/>
-        <Input bind:value={githubTag} className="inlineComponent" inline={true} helperText="github tag"/>
-        <Button onclick={handleCreateRelease}>Submit</Button>
-        <ErrorTextBox bind:value={errorMessage}/>
-    </div>
+    <Input bind:value={releaseName}
+           label="release name"
+           placeholder="release name"
+    />
 
-    <ReleaseList releases={plugin.releases} isOwn={isOwn} plugin={plugin}/>
+    <Input bind:value={githubTag}
+           label="github tag"
+           placeholder="github tag"
+    />
+
+    <ErrorTextBox className="m-2.5" bind:value={errorMessage}/>
+
+    <Button className="mb-2.5" onClick={handleCreateRelease}>Publish</Button>
+
+    <ReleaseList className="m-auto" releases={plugin.releases} isOwn={isOwn} plugin={plugin}/>
 </div>
 
-<style>
+<style lang="postcss">
     #page {
+        max-width: 400px;
         text-align: center;
-    }
-
-    .inlineComponent {
-        display: inline;
+        margin: auto;
     }
 </style>

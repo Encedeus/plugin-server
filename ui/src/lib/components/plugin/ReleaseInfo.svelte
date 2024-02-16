@@ -3,10 +3,13 @@
     import {getRelativeTimeString} from "$lib/service/relativeTimeService";
     import {getApi} from "$lib/api/api";
     import {invalidateAll} from "$app/navigation";
+    import Button from "$lib/components/generic/Button.svelte";
+    import ElipsisVertical from "$lib/components/heroicons/ElipsisVertical.svelte";
 
     export let release: Release;
     export let isOwn: boolean = false;
     export let plugin: Plugin;
+    export let className: string;
 
     let relativeTime: string = getRelativeTimeString(Date.parse(<string>release.publishedAt));
     let isShowingDropdown: boolean = false;
@@ -34,12 +37,12 @@
         await invalidateAll()
     }
 </script>
-<div class="releaseInfoContainer">
-    <p class="releaseInfoComponent" class:deprecated={release.isDeprecated}>{release.name} ----- {relativeTime}</p>
+<div class="releaseInfoContainer w-fit {className}">
+    <p class="releaseInfoComponent m-auto" class:deprecated={release.isDeprecated}>{release.name} ----- {relativeTime}</p>
     {#if isOwn}
-        <button class="releaseInfoComponent" on:click={toggleDropdown}>...</button>
+        <button class="releaseInfoComponent" on:click={toggleDropdown}><ElipsisVertical/></button>
         <div class="releaseInfoComponent releaseDropdown" class:invisible={!isShowingDropdown}>
-            <button on:click={handeDeprecate}>Deprecate</button>
+            <Button isDisabled={release.isDeprecated} size="xs" onClick={handeDeprecate}>Deprecate</Button>
         </div>
     {/if}
 </div>
@@ -59,7 +62,6 @@
     }
 
     .releaseDropdown {
-        background-color: darkgray;
-        position: relative;
+        position: absolute;
     }
 </style>

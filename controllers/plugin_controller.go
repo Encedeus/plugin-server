@@ -160,6 +160,10 @@ func (PluginController) HandleGetReadme(c echo.Context, db *ent.Client) error {
 
 	readme, err := api.GetReadme(repo, publicationData.Tag)
 
+	if err != nil {
+		return errors2.GetHTTPErrorResponse(c, err)
+	}
+
 	return proto.MarshalControllerProtoResponseToJSON(&c, 200, &protoapi.PluginGetReadmeResponse{Readme: readme})
 }
 

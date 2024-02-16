@@ -10,6 +10,11 @@ import (
 	"net/http"
 )
 
+var headers = map[string]string{
+	"User-Agent":    "EncedeusRegistry",
+	"Authorization": "",
+}
+
 type asset struct {
 	Name        string `json:"name"`
 	DownloadURL string `json:"browser_download_url"`
@@ -29,7 +34,9 @@ func DoesGitHubRepoExist(repo *protoapi.GithubRepo) bool {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s", repo.Username, repo.RepoName)
 	req, _ := http.NewRequest("GET", url, nil)
 
-	req.Header.Add("Authorization", "")
+	for header, value := range headers {
+		req.Header.Add(header, value)
+	}
 
 	res, _ := http.DefaultClient.Do(req)
 
@@ -50,7 +57,9 @@ func DoesReleaseTagExistInRepo(repo *protoapi.GithubRepo, tag string) bool {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/tags/%s", repo.Username, repo.RepoName, tag)
 	req, _ := http.NewRequest("GET", url, nil)
 
-	req.Header.Add("Authorization", "")
+	for header, value := range headers {
+		req.Header.Add(header, value)
+	}
 
 	res, _ := http.DefaultClient.Do(req)
 
@@ -70,7 +79,10 @@ func DoesReleaseTagExistInRepo(repo *protoapi.GithubRepo, tag string) bool {
 func GetReleaseFileURI(repo *protoapi.GithubRepo, tag string) (*string, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/tags/%s", repo.Username, repo.RepoName, tag)
 	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Add("Authorization", "")
+
+	for header, value := range headers {
+		req.Header.Add(header, value)
+	}
 
 	res, _ := http.DefaultClient.Do(req)
 
@@ -98,7 +110,9 @@ func GetCommitSHAOfReleaseRef(repo *protoapi.GithubRepo, releaseTag string) (sha
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/git/ref/tags/%s", repo.Username, repo.RepoName, releaseTag)
 	req, _ := http.NewRequest("GET", url, nil)
 
-	req.Header.Add("Authorization", "")
+	for header, value := range headers {
+		req.Header.Add(header, value)
+	}
 
 	res, _ := http.DefaultClient.Do(req)
 
@@ -111,6 +125,7 @@ func GetCommitSHAOfReleaseRef(repo *protoapi.GithubRepo, releaseTag string) (sha
 		if res.StatusCode == 404 {
 			return "", errors.ErrRepoGone
 		}
+		log.Errorf("unexpected status: %d", res.StatusCode)
 		return "", errors.ErrGithubApiFailed
 	}
 
@@ -127,7 +142,9 @@ func GetReadme(repo *protoapi.GithubRepo, releaseTag string) (string, error) {
 	url := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s/README.md", repo.Username, repo.RepoName, sha)
 	req, _ := http.NewRequest("GET", url, nil)
 
-	req.Header.Add("Authorization", "")
+	for header, value := range headers {
+		req.Header.Add(header, value)
+	}
 
 	res, _ := http.DefaultClient.Do(req)
 

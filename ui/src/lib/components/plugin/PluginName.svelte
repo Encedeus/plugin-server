@@ -5,8 +5,8 @@
     const pluginPage = `/plugin/${pluginName}/`
 </script>
 
-<a href={pluginPage}>
-    <p class="pluginName" style={style} >{pluginName}</p>
+<a href={pluginPage} class="w-fit">
+    <p class="w-fit" style={style} >{pluginName}</p>
 </a>
 
 

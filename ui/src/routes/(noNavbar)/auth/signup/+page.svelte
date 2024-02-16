@@ -5,9 +5,9 @@
         validateUsername,
         validateEmail
     } from "@encedeus/registry-js-api";
-    import Input from "$lib/components/Input.svelte";
+    import Input from "$lib/components/generic/Input.svelte";
     import Checkbox from "$lib/components/Checkbox.svelte";
-    import Button from "$lib/components/Button.svelte";
+    import Button from "$lib/components/generic/Button.svelte";
     import ErrorTextBox from "$lib/components/ErrorTextBox.svelte";
     import {goto} from "$app/navigation";
     import {accessTokenStore} from "$lib/stores/accessTokenStore";
@@ -72,24 +72,32 @@
 
 <div id="page">
 
-    <Input type="text" placeholder="name" bind:value={username}
+    <Input type="text"
+           label="name"
+           placeholder="name"
+           error={!!nameError}
+           bind:value={username}
            bind:helperText={nameError}/>
 
-    <Input type="email" placeholder="email" bind:value={email}
+    <Input type="text"
+           label="email"
+           placeholder="email"
+           error={!!emailError}
+           bind:value={email}
            bind:helperText={emailError}/>
 
-    <Input type={showPassword ? "text" : "password"} placeholder="password" bind:value={password}
+    <Input type={showPassword ? "text" : "password"}
+           label="password"
+           placeholder="password"
+           error={!!passwordError}
+           bind:value={password}
            bind:helperText={passwordError}/>
 
-    <br>
+    <Checkbox className="m-auto" onclick={handleShowHidePassword}>Show password</Checkbox>
 
-    <Checkbox onclick={handleShowHidePassword}>Show password</Checkbox>
+    <ErrorTextBox className="m-auto" bind:value={responseError}/>
 
-    <br>
-
-    <ErrorTextBox bind:value={responseError}/>
-
-    <Button onclick={handleSignUp}>Sign Up</Button>
+    <Button className="m-auto" onClick={handleSignUp}>Sign Up</Button>
 </div>
 
 <style>

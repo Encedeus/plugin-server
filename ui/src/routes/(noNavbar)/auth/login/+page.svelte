@@ -4,14 +4,14 @@
         validatePassword,
         validateUserIdentifier
     } from "@encedeus/registry-js-api";
-    import Input from "$lib/components/Input.svelte";
+    import Input from "$lib/components/generic/Input.svelte";
     import Checkbox from "$lib/components/Checkbox.svelte";
-    import Button from "$lib/components/Button.svelte";
+    import Button from "$lib/components/generic/Button.svelte";
     import ErrorTextBox from "$lib/components/ErrorTextBox.svelte";
     import {goto} from "$app/navigation";
     import {getApi} from "$lib/api/api";
 
-    const api = getApi()
+    const api = getApi();
 
     let password: string = "", userIdentifier: string = "";
     let passwordError: string = "", userIdentifierError: string = "", responseError = "";
@@ -24,6 +24,7 @@
         responseError = "";
 
         const passErr = validatePassword(password);
+
         const uidErr = validateUserIdentifier(userIdentifier);
 
         if (passErr) {
@@ -50,7 +51,7 @@
         }
 
         //api.AccessToken = <string>response.response?.accessToken
-        goto("/")
+        goto("/");
     }
 
     export function handleShowHidePassword() {
@@ -61,24 +62,30 @@
 
 <div id="page">
 
-    <Input type="text" placeholder="username / email" bind:value={userIdentifier}
-           bind:helperText={userIdentifierError}/>
-    <Input type={showPassword ? "text" : "password"} placeholder="password" bind:value={password}
-           bind:helperText={passwordError}/>
+    <Input label="username / email"
+           type="text"
+           placeholder="username / email"
+           bind:value={userIdentifier}
+           error={!!userIdentifierError}
+    />
+    <Input label="password"
+           type={showPassword ? "text": "password"}
+           placeholder="password"
+           bind:value={password}
+           error={!!passwordError}
+    />
 
-    <br>
+    <Checkbox className="m-auto" onclick={handleShowHidePassword}>Show password</Checkbox>
 
-    <Checkbox onclick={handleShowHidePassword}>Show password</Checkbox>
+    <ErrorTextBox className="m-auto" bind:value={responseError}/>
 
-    <br>
-
-    <ErrorTextBox bind:value={responseError}/>
-
-    <Button onclick={handleLogin}>Login</Button>
+    <Button className="m-auto" onClick={handleLogin}>Login</Button>
 </div>
 
 <style>
     #page {
-        text-align: center;
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
     }
 </style>

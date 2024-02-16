@@ -12,24 +12,25 @@
 </script>
 
 
-<div id="page">
+<div id="page" class="m-auto">
     <div class="info">
-        <UserInfo  user={user} isOwn={isOwn}/>
+        <UserInfo className=""  user={user} isOwn={isOwn}/>
         <UserPlugins user={user} isOwn={isOwn}/>
     </div>
 </div>
 
 <style>
     #page {
+        margin: auto;
         margin-top: 20px;
-        margin-left: 10px
+        max-width: 800px;
     }
 
     .info {
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
-        justify-content: left;
+        justify-content: space-between;
 
         gap: 5px 50px;
     }

@@ -4,10 +4,11 @@
     import PluginInfo from "$lib/components/plugin/BasicPluginInfo.svelte";
 
     export let plugin: Plugin;
+    export let className: string;
 
 </script>
 
-<div class="pluginContainer">
+<div class="pluginContainer {className }">
     <PluginName pluginName={plugin.name}/>
     <PluginInfo plugin={plugin}/>
 </div>

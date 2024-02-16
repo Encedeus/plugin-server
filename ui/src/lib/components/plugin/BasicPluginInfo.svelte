@@ -2,14 +2,18 @@
     import UserName from "$lib/components/user/UserName.svelte";
     import {getRelativeTimeString} from "$lib/service/relativeTimeService.js";
     import PluginName from "$lib/components/plugin/PluginName.svelte";
+    import {goto} from "$app/navigation";
 
     export let plugin;
+    export let className: string;
     export let label: "owner" | "name";
+
+    const pluginPage = `/plugin/${plugin.name}/`;
 
     let hasReleases = plugin.releases !== undefined;
     let latestReleaseName: string = "", latestRelativeTime: string = "";
 
-    function loadData(){
+    function loadData() {
         hasReleases = plugin.releases !== undefined;
 
         if (hasReleases) {
@@ -18,12 +22,11 @@
         }
     }
 
-    loadData()
-    $: plugin && loadData()
+    loadData();
+    $: plugin && loadData();
 </script>
 
-<div class="pluginInfo">
-
+<div class="pluginInfo {className}" >
     {#if label === "owner"}
         <UserName style="margin-top: 5px; margin-bottom: 5px" username={plugin.ownerName}/>
     {:else if label === "name"}
@@ -37,6 +40,7 @@
     {:else}
         <p class="pluginInfoComponent">no published releases</p>
     {/if}
+
 </div>
 
 <style>
@@ -44,8 +48,8 @@
         display: flex;
         flex-direction: row;
         justify-content: left;
-        width: 100%;
-
+        /*width: 100%;*/
+        width: fit-content;
         gap: 5px 20px;
     }
 

@@ -2,6 +2,7 @@
     import {userDataStore} from "$lib/stores/userDataStore";
     import type {LayoutAuthData} from "$lib/interfaces/intefaces";
     import {accessTokenStore} from "$lib/stores/accessTokenStore";
+    import "../app.css";
 
     export let data: LayoutAuthData;
 
