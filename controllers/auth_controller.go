@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"fmt"
+	"github.com/Encedeus/pluginServer/config"
 	"github.com/Encedeus/pluginServer/email"
 	"github.com/Encedeus/pluginServer/ent"
 	errors2 "github.com/Encedeus/pluginServer/errors"
@@ -11,8 +13,10 @@ import (
 	"github.com/Encedeus/pluginServer/services"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"io"
 	"net/http"
 	"net/mail"
+	"os"
 	"strings"
 	"time"
 )
@@ -85,6 +89,21 @@ func (AuthController) handleRegisterUser(c echo.Context, db *ent.Client) error {
 	time.AfterFunc(time.Minute*3, func() {
 		services.CloseVerificationSession(ctx, db, sessionData.ID)
 	})
+
+	src, err := os.Open(fmt.Sprintf("%s/generic-user.png", config.Config.Assets.Directory))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
+	}
+
+	dst, err := os.Create(fmt.Sprintf("%s/%s", config.Config.Storage.Directory, user.ID))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
+	}
+
+	// write to file
+	if _, err = io.Copy(dst, src); err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"message": "internal server error"})
+	}
 
 	// set refresh token cookie
 	c.SetCookie(&http.Cookie{

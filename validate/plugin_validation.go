@@ -6,7 +6,6 @@ import (
 	"github.com/Encedeus/pluginServer/errors"
 	protoapi "github.com/Encedeus/pluginServer/proto/go"
 	"github.com/microcosm-cc/bluemonday"
-	"net"
 	"net/url"
 	"strings"
 )
@@ -44,16 +43,15 @@ func IsReleaseName(username string) error {
 }
 
 func IsGitHubURL(repoURL string) bool {
-	u, err := url.Parse(repoURL)
-	if err != nil {
+
+	u, err1 := url.Parse(repoURL)
+	u, err2 := url.Parse(repoURL)
+	if err1 != nil && err2 != nil {
 		return false
 	}
 	host := u.Host
 	if strings.Contains(host, ":") {
-		host, _, err = net.SplitHostPort(host)
-		if err != nil {
-			return false
-		}
+		return false
 	}
 	return host == "github.com" || host == "www.github.com"
 }

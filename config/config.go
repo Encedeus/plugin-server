@@ -19,6 +19,7 @@ type Configuration struct {
 	Storage    StorageConfiguration  `hcl:"storage,block"`
 	SMTP       SMTPConfiguration     `hcl:"smtp,block"`
 	Validation ValidationConfig      `hcl:"validation,block"`
+	Assets     AssetsConfiguration   `hcl:"assets,block"`
 }
 
 type ServerConfiguration struct {
@@ -64,6 +65,10 @@ type ValidationConfig struct {
 
 	MaxReleaseNameLen int `hcl:"max_release_name_len"`
 	MinReleaseNameLen int `hcl:"min_release_name_len"`
+}
+
+type AssetsConfiguration struct {
+	Directory string `hcl:"dir"`
 }
 
 func (s *ServerConfiguration) URI() string {

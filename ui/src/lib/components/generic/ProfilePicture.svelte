@@ -1,5 +1,5 @@
 <script lang="ts">
-    import DefaultIcon from "$lib/assets/generic-user.png";
+    import DefaultIcon from "../../../../../assets/generic-user.png";
     import EditIcon from "$lib/components/heroicons/EditIcon.svelte";
     import { createEventDispatcher } from "svelte";
 

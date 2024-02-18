@@ -2,6 +2,6 @@
 
 <style>
   div {
-      background: url("$lib/assets/generic-user.png");
+      background: url("../../../../../assets/generic-user.png");
   }
 </style>

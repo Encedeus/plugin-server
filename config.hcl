@@ -43,3 +43,6 @@ validation {
   min_release_name_len = 2
 }
 
+assets {
+  dir = "./assets"
+}
