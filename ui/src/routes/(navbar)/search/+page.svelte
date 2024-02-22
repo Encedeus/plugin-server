@@ -20,7 +20,7 @@
 
     function loadData() {
         if (data.response.plugins.length == 0) {
-            return
+            return;
         }
 
         plugins = data.response.plugins!;
@@ -32,9 +32,20 @@
     loadData();
 </script>
 
-{#if data.response.plugins.length !== 0}
-    <PluginList plugins={plugins}/>
-    <PageSelector currentPage={currentPage}, pagesTotal={pagesTotal} getAnchor={getAnchor}/>
-{:else }
-    <p>no matches found</p>
-{/if}
+
+<div id="page">
+    {#if data.response.plugins.length !== 0}
+        <PluginList plugins={plugins}/>
+        <PageSelector className="m-auto w-fit" currentPage={currentPage}, pagesTotal={pagesTotal} getAnchor={getAnchor}/>
+    {:else }
+        <p>no matches found</p>
+    {/if}
+</div>
+
+<style>
+    #page {
+        margin: auto;
+        margin-top: 10px;
+        max-width: 85rem;
+    }
+</style>

@@ -1,10 +1,8 @@
 <script lang="ts">
     export let username: string;
-    export let style: string;
+    export let className: string;
     let userPage = `/user/${username}`;
 
 </script>
 
-<a href={userPage}>
-    <p class="userName" style={style}>{username}</p>
-</a>
+<a href={userPage} class={className}>{username}</a>

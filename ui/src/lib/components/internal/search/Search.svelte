@@ -10,28 +10,13 @@
         ["md", "w-72 h-3"],
         ["lg", "w-[40vw] h-10 rounded-full px-12"],
     ]);
-
-
-    const dispatch = createEventDispatcher();
-
-    function onFocusIn(e) {
-        dispatch('focusin', e);
-    }
-
-    function onFocusOut(e) {
-        dispatch('focusout', e);
-    }
-
-    function onKeyUp(e) {
-        dispatch('keyup', e);
-    }
 </script>
 
 <div>
     <input bind:value={value}
-           on:focusin={onFocusIn}
-           on:focusout={onFocusOut}
-           on:keyup={onKeyUp}
+           on:focusin
+           on:focusout
+           on:keyup
            type="search"
            placeholder="Search"
            class="{sizes.get(size)} placeholder:text-xs placeholder-white placeholder-opacity-90 font-inter font-normal text-sm text-indigo-300 focus:outline-indigo-400 outline-none outline-offset-0 {className}">

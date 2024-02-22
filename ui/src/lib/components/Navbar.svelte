@@ -204,10 +204,8 @@
         border-bottom: 50px;
     }
 
-    #signIn,
-    #signUp {
-        background-color: aliceblue;
-        padding-inline: 4px 4px;
+    #logo {
+        filter: brightness(0) invert(1);
     }
 
     .navbarComponent {

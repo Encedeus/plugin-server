@@ -1,9 +1,11 @@
 <script lang="ts">
+    import {goto} from "$app/navigation";
+
     export let size: "sm" | "md" | "lg" | "xl" = "md";
     export let color: "indigo" | "red" = "indigo";
     export let type: "button" | "submit" = "button";
     export let className = "";
-    export let onClick: () => void;
+    export let onClick: () => void = () => {};
     export let redirect: string;
     export let isDisabled: boolean = false;
 
@@ -20,20 +22,23 @@
         ["red", "bg-red-600 hover:bg-red-700 active:bg-red-800"],
     ]);
 
-    let disabled = isDisabled ? "disabled" : ""
+    async function handleClick() {
+        await goto(redirect);
+        onClick()
+    }
+
+    let disabled = isDisabled ? "disabled" : "";
     console.log(isDisabled);
 </script>
 
 {#if redirect}
-    <a href={redirect} class={className}>
-        <button on:click={onClick}
-                {type}
-                {disabled}
-                class="text-white font-bold text-sm rounded-full {colors.get(color)} {sizes.get(size)} hover:shadow-xl active:shadow-xl transition-all {className}"
-        >
-            <slot/>
-        </button>
-    </a>
+    <button on:click={handleClick}
+            {type}
+            {disabled}
+            class="text-white font-bold text-sm rounded-full {colors.get(color)} {sizes.get(size)} hover:shadow-xl active:shadow-xl transition-all {className}"
+    >
+        <slot/>
+    </button>
 {:else }
     <button on:click={onClick}
             {type}

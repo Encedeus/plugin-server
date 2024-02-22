@@ -6,20 +6,22 @@
 
     export let user: User;
     export let isOwn: Boolean;
+    export let className: string;
 
 </script>
 
 
-<div>
+<div class={className}>
 
-    <Card headerTextSize="lg" >
-        <h1 slot="title" class="">Plugins</h1>
+    <Card className="relative" headerTextSize="lg" headerHeight="sm">
+        <div slot="title" class="titleContainer">
+            <h1>Plugins</h1>
 
-        <div slot="content" class="m-2.5">
-
-            <div class="flex justify-center">
-                <Button className="" size="sm" redirect="/plugin/">Create New</Button>
-            </div>
+            {#if isOwn}
+                <Button className="rounded-xl mr-8" size="md" redirect="/plugin/">Create New</Button>
+            {/if}
+        </div>
+        <div slot="content" class="">
             <PluginList className="mt-2.5" plugins={user.plugins}/>
         </div>
     </Card>
@@ -28,6 +30,13 @@
 </div>
 
 <style>
+    .titleContainer {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
 </style>
 
 

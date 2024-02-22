@@ -1,13 +1,11 @@
-<script>
+<script lang="ts">
 
-    export let pluginName
-    export let style
-    const pluginPage = `/plugin/${pluginName}/`
+    export let pluginName;
+    export let className;
+    const pluginPage = `/plugin/${pluginName}/`;
 </script>
 
-<a href={pluginPage} class="w-fit">
-    <p class="w-fit" style={style} >{pluginName}</p>
-</a>
+<a href={pluginPage} class={className}>{pluginName}</a>
 
 
 

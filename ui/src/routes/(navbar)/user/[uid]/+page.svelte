@@ -12,18 +12,18 @@
 </script>
 
 
-<div id="page" class="m-auto">
+<div id="page" class="">
     <div class="info">
         <UserInfo className=""  user={user} isOwn={isOwn}/>
-        <UserPlugins user={user} isOwn={isOwn}/>
+        <UserPlugins className="w-[calc(100%-250px)] min-w-min" user={user} isOwn={isOwn}/>
     </div>
 </div>
 
 <style>
     #page {
-        margin: auto;
-        margin-top: 20px;
-        max-width: 800px;
+        margin: 20px;
+        /*margin: auto;
+        max-width: 800px;*/
     }
 
     .info {
@@ -34,8 +34,6 @@
 
         gap: 5px 50px;
     }
-
-
 </style>
 
 

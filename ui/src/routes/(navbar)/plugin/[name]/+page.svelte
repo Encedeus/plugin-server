@@ -33,7 +33,7 @@
     $: data , $page.url.pathname && loadData();
 </script>
 
-<div id="page">
+<div id="page" class="m-auto w-[80rem]">
     <h1 class="text-4xl">{data.plugin.name}</h1>
     <FilledContainer className="w-fit m-2.5 ml-0 pl-2.5 pr-2.5">
         <PluginInfo plugin={data.plugin} label="owner"/>
@@ -54,15 +54,15 @@
     </div>
     <div class:invisible={selected !== "releases"}>
         <Card className="mt-2" headerTextSize="lg">
-            <h1 slot="title" class="m-0">Published Releases</h1>
-
+            <div slot="title" class="flex flex-row justify-between">
+                <h1 class="m-0">Published Releases</h1>
+                {#if isOwn}
+                        <Button className="w-36 rounded-xl mr-8" size="sm"
+                                redirect={`/plugin/${data.plugin.name}/releases`}>Manage releases</Button>
+                {/if}
+            </div>
             <span slot="content">
-            {#if isOwn}
-                <div class="flex justify-center mt-2">
-                    <Button className="w-36" size="sm"
-                            redirect={`/plugin/${data.plugin.name}/releases`}>Manage releases</Button>
-                </div>
-            {/if}
+
                 <ReleaseList className="mt-2.5 m-auto w-fit min-w-[400px]" releases={data.plugin.releases} isOwn={isOwn}
                              plugin={data.plugin}/>
             </span>
@@ -85,9 +85,7 @@
     }
 
     #page {
-        padding: 10px 20px;
-        margin: auto;
-        max-width: 800px;
+        padding: 10px 50px;
     }
 </style>
 

@@ -1,11 +1,12 @@
 <script lang="ts">
-    import Input from "$lib/components/Input.svelte";
-    import Button from "$lib/components/Button.svelte";
+    import Input from "$lib/components/generic/Input.svelte";
+    import Button from "$lib/components/generic/Button.svelte";
     import {userDataStore} from "$lib/stores/userDataStore";
     import {getApi} from "$lib/api/api";
     import {UserUpdateRequest} from "@encedeus/registry-js-api";
     import ErrorTextBox from "$lib/components/ErrorTextBox.svelte";
     import {goto} from "$app/navigation";
+    import Checkbox from "$lib/components/Checkbox.svelte";
 
     let newUsername: string = "",
         currentEmail: string = $userDataStore.email,
@@ -14,19 +15,27 @@
         passwordConfirmation: string = "",
         errorMessage: string = "",
         isLoading: boolean = false,
-        currentName: string = $userDataStore.name;
+        currentName: string = $userDataStore.name,
+        showPassword: boolean
 
     const api = getApi();
 
 
     async function handleSaveData() {
-        errorMessage = "";
+        if (passwordConfirmation != newPassword) {
+            errorMessage = "make sure the password is entered correctly"
+            return
+        }
 
         const req = {
             name: newUsername,
             email: newEmail,
             password: newPassword
         } as UserUpdateRequest;
+       if (!req.name && !req.password && !req.email) {
+           errorMessage = "enter new parameters"
+           return
+       }
 
         isLoading = true;
 
@@ -38,6 +47,8 @@
             errorMessage = resp.error.message;
             return;
         }
+
+        errorMessage = "";
     }
 
     function handleDiscardData() {
@@ -48,40 +59,46 @@
     }
 
     async function handleDeleteUser() {
-        const resp = await api.UsersService.DeleteSelf()
+        const resp = await api.UsersService.DeleteSelf();
+
+        console.log(resp);
 
         if (resp.error) {
             errorMessage = resp.error.message;
             return;
         }
 
-        goto("/")
+        goto("/");
+    }
+
+    function handleShowHidePassword() {
+        showPassword = !showPassword;
     }
 
 </script>
 
 <div id="page">
     <div>
-        <Input helperText="new username" bind:value={newUsername} placeholder={currentName}/>
+        <Input label="new username" bind:value={newUsername} placeholder={currentName}/>
     </div>
 
     <div>
-        <Input helperText="new email" bind:value={newEmail} placeholder={currentEmail}/>
+        <Input label="new email" bind:value={newEmail} placeholder={currentEmail}/>
     </div>
 
     <div>
-        <Input helperText="new password" bind:value={newPassword}/>
-        <Input helperText="confirm password" bind:value={passwordConfirmation}/>
+        <Input type={showPassword ? "text": "password"} placeholder="new password" label="new password" bind:value={newPassword}/>
+        <Input type={showPassword ? "text": "password"} placeholder="confirm new password" label="confirm new password" bind:value={passwordConfirmation}/>
     </div>
-
-    <Button onclick={handleSaveData}>Save</Button>
-    <Button onclick={handleDiscardData}>Discard changes</Button>
-    <Button onclick={handleDeleteUser}>Delete account</Button>
-
-    <!-- state to be used for a loading indicator-->
-    <p class:invisible={!isLoading}>loading...</p>
 
     <ErrorTextBox bind:value={errorMessage}/>
+
+    <Checkbox onclick={handleShowHidePassword}>Show password</Checkbox>
+
+    <Button className="mt-2.5" onClick={handleSaveData}>Save</Button>
+    <Button className="mt-2.5" onClick={handleDiscardData}>Discard changes</Button>
+    <br>
+    <Button className="mt-2.5 bg-red-500 hover:bg-red-600 active:bg-red-700" onClick={handleDeleteUser}>Delete account</Button>
 </div>
 
 <style>

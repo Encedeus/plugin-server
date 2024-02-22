@@ -38,7 +38,7 @@
         <span class="ml-7">
             <slot name="icon"/>
         </span>
-        <span class="text-white {headerTextSizes.get(headerTextSize)} font-bold">
+        <span class="text-white {headerTextSizes.get(headerTextSize)} font-bold w-full">
             <slot name="title"/>
         </span>
     </div>

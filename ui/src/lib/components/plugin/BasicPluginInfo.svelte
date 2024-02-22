@@ -28,9 +28,9 @@
 
 <div class="pluginInfo {className}" >
     {#if label === "owner"}
-        <UserName style="margin-top: 5px; margin-bottom: 5px" username={plugin.ownerName}/>
+        <UserName className="mt-[5px] mb-[5px]" username={plugin.ownerName}/>
     {:else if label === "name"}
-        <PluginName style="margin-top: 5px; margin-bottom: 5px" pluginName={plugin.name}/>
+        <PluginName className="mt-[5px] mb-[5px]" pluginName={plugin.name}/>
     {/if}
 
 
@@ -48,6 +48,7 @@
         display: flex;
         flex-direction: row;
         justify-content: left;
+        align-items: baseline;
         /*width: 100%;*/
         width: fit-content;
         gap: 5px 20px;

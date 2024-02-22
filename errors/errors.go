@@ -39,7 +39,7 @@ var (
 	ErrUsernameTooShort           = NewValidationError("username too short")
 	ErrPluginNameTooShort         = NewValidationError("plugin name too short")
 	ErrUnauthorized               = NewHttpError("unauthorized", http.StatusUnauthorized)
-	ErrNotModified                = NewHttpError("", 304)
+	ErrNotModified                = NewValidationError("not modified")
 	ErrInvalidGithubURL           = NewValidationError("invalid github URL")
 	ErrGithubRepoDoesNotExist     = NewValidationError("Non existent GitHub repo")
 	ErrPluginNotFound             = NewHttpError("plugin not found", http.StatusNotFound)

@@ -3,7 +3,8 @@
 
     export let pagesTotal: number,
         currentPage: number,
-        getAnchor: (number) => string;
+        getAnchor: (number) => string,
+        className: string;
 
     let pageAnchors: Array<{ href: string, pageNumber: number }>,
         hrefFirst: string,
@@ -20,7 +21,7 @@
             end = pagesTotal;
         }
 
-        return Array.from({length: (end - start)}, (_, i) => start);
+        return Array.from({length: (end - start + 5)}, (_, i) => start);
     }
 
     function getAnchors(pageNumbers): Array<string> {
@@ -48,6 +49,8 @@
 
         pageAnchors = newPageAnchors;
 
+        console.log(pageNumbers);
+
         hrefFirst = getAnchor(1);
         hrefLast = getAnchor(pagesTotal);
     }
@@ -57,21 +60,22 @@
 </script>
 
 
+<div class={className}>
+    <a href={hrefFirst}> 1 </a>
 
-<a href={hrefFirst}> 1 </a>
+    {#if currentPage > 4}
+        <p>...</p>
+    {/if}
 
-{#if currentPage > 4}
-    <p>...</p>
-{/if}
+    {#each pageAnchors as anchor}
+        <a href={anchor.href}> {anchor.pageNumber} </a>
+    {/each}
 
-{#each pageAnchors as anchor}
-    <a href={anchor.href}> {anchor.pageNumber} </a>
-{/each}
+    {#if pagesTotal - currentPage >= 4}
+        <p>...</p>
+    {/if}
 
-{#if pagesTotal - currentPage >= 4}
-    <p>...</p>
-{/if}
-
-{#if pagesTotal !== 1}
-    <a href={hrefLast}> {pagesTotal} </a>
-{/if}
+    {#if pagesTotal !== 1}
+        <a href={hrefLast}> {pagesTotal} </a>
+    {/if}
+</div>
