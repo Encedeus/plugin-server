@@ -3,7 +3,6 @@ syntax = "proto3";
 option go_package = "./go;protoapi";
 
 message UserRegisterRequest {
-  // required
   string name = 1;
   string email = 2;
   string password = 3;

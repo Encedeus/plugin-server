@@ -40,10 +40,10 @@ func (ac AuthController) registerRoutes(srv *Server) {
 
 			authEmailEndpoint.Use(middleware.AccessJWTAuth)
 
-			authEmailEndpoint.GET("/verify/:id", func(c echo.Context) error {
+			authEmailEndpoint.POST("/verify/:id", func(c echo.Context) error {
 				return ac.HandleVerifyEmail(c, srv.DB)
 			})
-			authEmailEndpoint.GET("/resend", func(c echo.Context) error {
+			authEmailEndpoint.POST("/resend", func(c echo.Context) error {
 				return ac.HandleResendVerificationEmail(c, srv.DB)
 			})
 		}

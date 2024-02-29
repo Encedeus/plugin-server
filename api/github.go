@@ -12,7 +12,7 @@ import (
 
 var headers = map[string]string{
 	"User-Agent":    "EncedeusRegistry",
-	"Authorization": "",
+	"Authorization": "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",
 }
 
 type asset struct {

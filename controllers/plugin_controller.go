@@ -55,13 +55,23 @@ func (pc PluginController) registerRoutes(srv *Server) {
 }
 
 func (PluginController) HandleFindPlugin(c echo.Context, db *ent.Client) error {
-	pluginName := c.Param("name")
+	pluginIdentifier := c.Param("name")
 
-	resp, err := services.FindPluginByName(c.Request().Context(), db, pluginName)
-	if err != nil {
-		return errors2.GetHTTPErrorResponse(c, err)
+	id, err := uuid.Parse(pluginIdentifier)
+
+	var resp *protoapi.Plugin
+
+	if err == nil {
+		resp, err = services.FindPluginById(c.Request().Context(), db, id)
+		if err != nil {
+			return errors2.GetHTTPErrorResponse(c, err)
+		}
+	} else {
+		resp, err = services.FindPluginByName(c.Request().Context(), db, pluginIdentifier)
+		if err != nil {
+			return errors2.GetHTTPErrorResponse(c, err)
+		}
 	}
-
 	return proto.MarshalControllerProtoResponseToJSON(&c, 200, resp)
 }
 

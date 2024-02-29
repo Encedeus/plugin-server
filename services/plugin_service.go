@@ -87,6 +87,24 @@ func FindPluginByName(ctx context.Context, db *ent.Client, pluginName string) (*
 
 	return proto.EntPluginEntityToProtoPlugin(pluginData), nil
 }
+func FindPluginById(ctx context.Context, db *ent.Client, pluginId uuid.UUID) (*protoapi.Plugin, error) {
+	pluginData, err := db.Plugin.Query().
+		Where(plugin.ID(pluginId)).
+		WithSource().
+		WithOwner().
+		WithPublications().
+		First(ctx)
+	if err != nil {
+
+		if ent.IsNotFound(err) {
+			return nil, errors2.ErrPluginNotFound
+		}
+
+		return nil, errors2.ErrQueryFailed
+	}
+
+	return proto.EntPluginEntityToProtoPlugin(pluginData), nil
+}
 
 func GetPluginWithAllEdges(ctx context.Context, db *ent.Client, pluginId uuid.UUID) (*ent.Plugin, error) {
 	pluginData, err := db.Plugin.Query().
