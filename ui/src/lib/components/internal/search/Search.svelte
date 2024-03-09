@@ -8,7 +8,7 @@
     const sizes = new Map<string, string>([
         ["sm"], ["w-64 h-3"],
         ["md", "w-72 h-3"],
-        ["lg", "w-[40vw] h-10 rounded-full px-12"],
+        ["lg", "w-[40vw] h-[44px] rounded-full px-12"],
     ]);
 </script>
 
