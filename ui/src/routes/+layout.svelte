@@ -12,6 +12,6 @@
     }
 </script>
 
-<main>
+<main class="h-full">
     <slot/>
 </main>

@@ -7,6 +7,8 @@
     import Button from "$lib/components/generic/Button.svelte";
     import ErrorTextBox from "$lib/components/ErrorTextBox.svelte";
     import {getApi} from "$lib/api/api";
+    import Card from "$lib/components/generic/Card.svelte";
+    import CardHeader from "$lib/components/generic/CardHeader.svelte";
 
 
     export let data: Plugin;
@@ -54,22 +56,33 @@
 </script>
 
 <div id="page">
+    <main class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <Card>
+            <CardHeader slot="title">
+                Manage Releases
+            </CardHeader>
+            <div class="flex flex-col gap-5 m-6 " slot="content">
+                <Input bind:value={releaseName}
+                       label="release name"
+                       placeholder="release name"
+                />
 
-    <Input bind:value={releaseName}
-           label="release name"
-           placeholder="release name"
-    />
+                <Input bind:value={githubTag}
+                       label="github tag"
+                       placeholder="github tag"
+                />
 
-    <Input bind:value={githubTag}
-           label="github tag"
-           placeholder="github tag"
-    />
+                <Button className="m-auto" onClick={handleCreateRelease}>Publish</Button>
 
-    <ErrorTextBox className="m-2.5" bind:value={errorMessage}/>
+                <ErrorTextBox className="m-auto" bind:value={errorMessage}/>
 
-    <Button className="mb-2.5" onClick={handleCreateRelease}>Publish</Button>
+                <ReleaseList className="m-auto" releases={plugin.releases} isOwn={isOwn} plugin={plugin}/>
+            </div>
 
-    <ReleaseList className="m-auto" releases={plugin.releases} isOwn={isOwn} plugin={plugin}/>
+        </Card>
+    </main>
+
+
 </div>
 
 <style lang="postcss">

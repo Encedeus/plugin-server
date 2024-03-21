@@ -5,7 +5,6 @@ import (
 	"github.com/Encedeus/pluginServer/ent"
 	encMiddleware "github.com/Encedeus/pluginServer/middleware"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 )
 
 type Controller interface {
@@ -33,13 +32,8 @@ func NewEmptyServer(db *ent.Client) *Server {
 }
 
 func WrapServerWithDefaults(srv *Server, _ *ent.Client) {
-	srv.Use(encMiddleware.JSONSyntaxMiddleware)
-	srv.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowMethods:     []string{"GET", "POST", "DELETE", "PUT", "PATCH", "HEAD"},
-		AllowHeaders:     []string{"Accept", "Content-Type", "Authorization"},
-		AllowOrigins:     []string{"http://localhost:5173"},
-		AllowCredentials: true,
-	}))
+	srv.Use(encMiddleware.JSONSyntaxMiddleware) // json syntax checker
+	srv.Use(encMiddleware.CORSMiddleware)       // cors config
 
 	InitRouter(srv)
 }

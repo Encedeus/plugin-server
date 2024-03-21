@@ -7,6 +7,8 @@
     import ErrorTextBox from "$lib/components/ErrorTextBox.svelte";
     import {goto} from "$app/navigation";
     import Checkbox from "$lib/components/Checkbox.svelte";
+    import CardHeader from "$lib/components/generic/CardHeader.svelte";
+    import Card from "$lib/components/generic/Card.svelte";
 
     let newUsername: string = "",
         currentEmail: string = $userDataStore.email,
@@ -16,15 +18,15 @@
         errorMessage: string = "",
         isLoading: boolean = false,
         currentName: string = $userDataStore.name,
-        showPassword: boolean
+        showPassword: boolean;
 
     const api = getApi();
 
 
     async function handleSaveData() {
         if (passwordConfirmation != newPassword) {
-            errorMessage = "make sure the password is entered correctly"
-            return
+            errorMessage = "make sure the password is entered correctly";
+            return;
         }
 
         const req = {
@@ -32,10 +34,10 @@
             email: newEmail,
             password: newPassword
         } as UserUpdateRequest;
-       if (!req.name && !req.password && !req.email) {
-           errorMessage = "enter new parameters"
-           return
-       }
+        if (!req.name && !req.password && !req.email) {
+            errorMessage = "enter new parameters";
+            return;
+        }
 
         isLoading = true;
 
@@ -78,27 +80,42 @@
 </script>
 
 <div id="page">
-    <div>
-        <Input label="new username" bind:value={newUsername} placeholder={currentName}/>
-    </div>
 
-    <div>
-        <Input label="new email" bind:value={newEmail} placeholder={currentEmail}/>
-    </div>
+    <main class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <Card>
+            <CardHeader slot="title">
+                Edit User Info
+            </CardHeader>
+            <div class="flex flex-col gap-5 m-6 " slot="content">
 
-    <div>
-        <Input type={showPassword ? "text": "password"} placeholder="new password" label="new password" bind:value={newPassword}/>
-        <Input type={showPassword ? "text": "password"} placeholder="confirm new password" label="confirm new password" bind:value={passwordConfirmation}/>
-    </div>
+                <Input label="new username" bind:value={newUsername} placeholder={currentName}/>
 
-    <ErrorTextBox bind:value={errorMessage}/>
+                <Input label="new email" bind:value={newEmail} placeholder={currentEmail}/>
 
-    <Checkbox onclick={handleShowHidePassword}>Show password</Checkbox>
+                <Input type={showPassword ? "text": "password"} placeholder="new password" label="new password"
+                       bind:value={newPassword}/>
+                <Input type={showPassword ? "text": "password"} placeholder="confirm new password"
+                       label="confirm new password" bind:value={passwordConfirmation}/>
 
-    <Button className="mt-2.5" onClick={handleSaveData}>Save</Button>
-    <Button className="mt-2.5" onClick={handleDiscardData}>Discard changes</Button>
-    <br>
-    <Button className="mt-2.5 bg-red-500 hover:bg-red-600 active:bg-red-700" onClick={handleDeleteUser}>Delete account</Button>
+
+                <Checkbox onclick={handleShowHidePassword}>Show password</Checkbox>
+
+                <ErrorTextBox bind:value={errorMessage}/>
+
+                <div class="m-auto flex flex-col gap-5">
+                    <div class="flex gap-5">
+                        <Button className="" onClick={handleSaveData}>Save</Button>
+                        <Button className="" onClick={handleDiscardData}>Discard changes</Button>
+                    </div>
+                    <Button className="m-auto bg-red-500 hover:bg-red-600 active:bg-red-700" onClick={handleDeleteUser}>
+                        Delete account
+                    </Button>
+                </div>
+            </div>
+
+        </Card>
+    </main>
+
 </div>
 
 <style>

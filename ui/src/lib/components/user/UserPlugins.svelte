@@ -13,12 +13,11 @@
 
 <div class={className}>
 
-    <Card className="relative" headerTextSize="lg" headerHeight="sm">
-        <div slot="title" class="titleContainer">
-            <h1>Plugins</h1>
-
+    <Card className="" >
+        <div slot="title">
+            Plugins
             {#if isOwn}
-                <Button className="rounded-xl mr-8" size="md" redirect="/plugin/">Create New</Button>
+                <Button className="rounded-xl ml-8" size="md" redirect="/plugin/">Create New</Button>
             {/if}
         </div>
         <div slot="content" class="">
@@ -30,13 +29,6 @@
 </div>
 
 <style>
-    .titleContainer {
-        width: 100%;
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-    }
 </style>
 
 
